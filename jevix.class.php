@@ -715,7 +715,7 @@ class Jevix{
 	}	
 		
 	protected function tagParam(&$name, &$value){
-		$this->saveState();
+    $this->saveState();
 		if(!$this->name($name, true)) return false;
 		
 		if(!$this->matchCh('=', true)){
@@ -895,8 +895,8 @@ class Jevix{
 		// Автодобавляемые параметры
 		if(!empty($tagRules[self::TR_PARAM_AUTO_ADD])){
 	        foreach($tagRules[self::TR_PARAM_AUTO_ADD] as $name => $value) { 
-	            // If there isn't such attribute or it has wrong value - setup it 
-	            if(!array_key_exists($name, $resParams) || $resParams[$name] != $value) { 
+	            // If there isn't such attribute - setup it 
+	            if(!array_key_exists($name, $resParams)) { 
 	                $resParams[$name] = $value; 
 	            } 
 	        } 

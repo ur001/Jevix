@@ -5,7 +5,7 @@
  * За помощь в написании примера спасибо Александру (http://vaart.habrahabr.ru, indrid@mail.ru)
  */
 
-require('../jevix.class.php');
+require('jevix.class.php');
 
 $jevix = new Jevix();
 
