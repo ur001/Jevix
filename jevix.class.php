@@ -133,6 +133,7 @@ class Jevix{
 	const TR_TAG_PREFORMATTED = 10;	 // Преформатированные тег, в котором всё заменяется на HTML сущности типа <pre> сохраняя все отступы и пробелы
 	const TR_PARAM_AUTO_ADD = 11;    // Auto add parameters + default values (a->rel[=nofollow]) 
 	const TR_TAG_NO_TYPOGRAPHY = 12; // Отключение типографирования для тега
+	const TR_TAG_IS_EMPTY = 13;		 // Не короткий тег с пустым содержанием имеет право существовать
 	
 	/**
 	 * Классы символов генерируются symclass.php
@@ -195,6 +196,14 @@ class Jevix{
 	function cfgSetTagNoTypography($tags){
 		$this->_cfgSetTagsFlag($tags, self::TR_TAG_NO_TYPOGRAPHY, true, false);
 	}		
+	
+	/**
+	 * КОНФИГУРАЦИЯ: Не короткие теги которые не нужно удалять с пустым содержанием, например, <param name="code" value="die!"></param>
+	 * @param array|string $tags тег(и)
+	 */
+	function cfgSetTagIsEmpty($tags){
+		$this->_cfgSetTagsFlag($tags, self::TR_TAG_IS_EMPTY, true, false);
+	}
 	
 	/**
 	 * КОНФИГУРАЦИЯ: Тег необходимо вырезать вместе с контентом (script, iframe)
@@ -676,7 +685,7 @@ class Jevix{
 			$this->restoreState();
 			return false;
 		}
-		
+		$name=strtolower($name);
 		// Пробуем получить список атрибутов тега
 		if($this->curCh != '>' && $this->curCh != '/') $this->tagParams($params);
 		
@@ -782,6 +791,7 @@ class Jevix{
 			$this->restoreState();
 			return false;
 		}
+		$name=strtolower($name);
 		$this->skipSpaces();
 		if(!$this->matchCh('>')) {
 			$this->restoreState();
@@ -902,8 +912,10 @@ class Jevix{
 	        } 
 		}
 		
-		// Пустой некороткий тег удаляем
-		if(!$short && empty($content)) return '';
+		// Пустой некороткий тег удаляем кроме исключений
+		if (!isset($tagRules[self::TR_TAG_IS_EMPTY]) or !$tagRules[self::TR_TAG_IS_EMPTY]) {
+			if(!$short && empty($content)) return '';
+		}		
 		// Собираем тег
 		$text='<'.$tag;	
 		// Параметры
