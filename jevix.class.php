@@ -128,19 +128,19 @@ class Jevix{
          * Константы для класификации тегов
          *
          */
-        const TR_TAG_ALLOWED = 1;                // Тег позволен
+        const TR_TAG_ALLOWED = 1;        // Тег позволен
         const TR_PARAM_ALLOWED = 2;      // Параметр тега позволен (a->title, a->src, i->alt)
         const TR_PARAM_REQUIRED = 3;     // Параметр тега влятся необходимым (a->href, img->src)
-        const TR_TAG_SHORT = 4;                  // Тег может быть коротким (img, br)
-        const TR_TAG_CUT = 5;                    // Тег необходимо вырезать вместе с контентом (script, iframe)
-        const TR_TAG_CHILD = 6;                  // Тег может содержать другие теги
+        const TR_TAG_SHORT = 4;          // Тег может быть коротким (img, br)
+        const TR_TAG_CUT = 5;            // Тег необходимо вырезать вместе с контентом (script, iframe)
+        const TR_TAG_CHILD = 6;          // Тег может содержать другие теги
         const TR_TAG_CONTAINER = 7;      // Тег может содержать лишь указанные теги. В нём не может быть текста
         const TR_TAG_CHILD_TAGS = 8;     // Теги которые может содержать внутри себя другой тег
-        const TR_TAG_PARENT = 9;                 // Тег в котором должен содержаться данный тег
+        const TR_TAG_PARENT = 9;         // Тег в котором должен содержаться данный тег
         const TR_TAG_PREFORMATTED = 10;  // Преформатированные тег, в котором всё заменяется на HTML сущности типа <pre> сохраняя все отступы и пробелы
         const TR_PARAM_AUTO_ADD = 11;    // Auto add parameters + default values (a->rel[=nofollow])
         const TR_TAG_NO_TYPOGRAPHY = 12; // Отключение типографирования для тега
-        const TR_TAG_IS_EMPTY = 13;              // Не короткий тег с пустым содержанием имеет право существовать
+        const TR_TAG_IS_EMPTY = 13;      // Не короткий тег с пустым содержанием имеет право существовать
 
         /**
          * Классы символов генерируются symclass.php
