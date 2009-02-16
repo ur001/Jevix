@@ -8,7 +8,7 @@
  *
  * @author ur001 <ur001ur001@gmail.com>, http://ur001.habrahabr.ru
  * @version 1.01
- *
+ * 
  * История версий:
  * 1.01
  *  + cfgSetAutoReplace теперь регистронезависимый
