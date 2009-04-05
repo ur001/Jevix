@@ -285,18 +285,18 @@ class Jevix{
         }
 
     /**
-     * CONFIGURATION: Adding autoadd attributes and their values to tag
+     * CONFIGURATION: Adding autoadd attributes and their values to tag. If the 'rewrite' set as true, the attribute value will be replaced
      * @param string $tag tag
-     * @param string|array $params array of pairs attributeName => attributeValue
+     * @param string|array $params array of pairs array('name'=>attributeName, 'value'=>attributeValue, 'rewrite'=>true|false)
      */
     function cfgSetTagParamsAutoAdd($tag, $params){
-        if(!isset($this->tagsRules[$tag])) throw new Exception("Tag $tag is missing in allowed tags list");
-        if(!is_array($params)) $params = array($params);
+        if(!isset($this->tagsRules[$tag])) throw new Exception("Tag $tag is missing in allowed tags list");        
+        if (is_array($params) and !isset($params[0])) $params = array($params);
         if(!isset($this->tagsRules[$tag][self::TR_PARAM_AUTO_ADD])) {
             $this->tagsRules[$tag][self::TR_PARAM_AUTO_ADD] = array();
-        }
-        foreach($params as $param => $value){
-            $this->tagsRules[$tag][self::TR_PARAM_AUTO_ADD][$param] = $value;
+        }        
+        foreach($params as $aParamValue){
+            $this->tagsRules[$tag][self::TR_PARAM_AUTO_ADD][$aParamValue['name']] = array('value'=>$aParamValue['value'],'rewrite'=>$aParamValue['rewrite']);
         }
     }
 
@@ -911,12 +911,12 @@ class Jevix{
 
                 // Автодобавляемые параметры
                 if(!empty($tagRules[self::TR_PARAM_AUTO_ADD])){
-                foreach($tagRules[self::TR_PARAM_AUTO_ADD] as $name => $value) {
-                    // If there isn't such attribute - setup it
-                    if(!array_key_exists($name, $resParams)) {
-                        $resParams[$name] = $value;
-                    }
-                }
+                	foreach($tagRules[self::TR_PARAM_AUTO_ADD] as $name => $aValue) {
+                    	// If there isn't such attribute - setup it
+                    	if(!array_key_exists($name, $resParams) or ($aValue['rewrite'] and $resParams[$name] != $aValue['value'])) {
+                        	$resParams[$name] = $aValue['value'];
+                    	}
+                	}
                 }
 
                 // Пустой некороткий тег удаляем кроме исключений
