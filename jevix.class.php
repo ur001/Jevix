@@ -871,13 +871,13 @@ class Jevix{
                                                         $this->eror('Попытка вставить JavaScript в URI');
                                                         continue(2);
                                                 }
-                                                // Первый символ должен быть a-z0-9!
-                                                if(!preg_match('/^[a-z0-9\/]/ui', $value)) {
+                                                // Первый символ должен быть a-z0-9 или #!
+                                                 if(!preg_match('/^[a-z0-9\/\#]/ui', $value)) {
                                                         $this->eror('URI: Первый символ адреса должен быть буквой или цифрой');
                                                         continue(2);
                                                 }
                                                 // HTTP в начале если нет
-                                                if(!preg_match('/^(http|https|ftp):\/\//ui', $value) && !preg_match('/^\//ui', $value)) $value = 'http://'.$value;
+                                                if(!preg_match('/^(http|https|ftp):\/\//ui', $value) && !preg_match('/^(\/|\#)/ui', $value) ) $value = 'http://'.$value;
                                                 break;
 
                                         case '#image':
