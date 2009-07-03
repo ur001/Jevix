@@ -1207,7 +1207,7 @@ class Jevix{
                                 if ($this->curParentTag 
                                 	and isset($this->tagsRules[$this->curParentTag])
                                 	and isset($this->tagsRules[$this->curParentTag][self::TR_TAG_NO_AUTO_BR]) 
-                                	and (is_null($this->openedTag) or $this->curParentTag==$this->openedTag) 
+                                	and (is_null($this->openedTag) or isset($this->tagsRules[$this->openedTag][self::TR_TAG_NO_AUTO_BR])) 
                                 	) {
                                 	// пропускаем <br/>
                                 } else {
