@@ -8,7 +8,7 @@
  *
  * @author ur001 <ur001ur001@gmail.com>, http://ur001.habrahabr.ru
  * @version 1.01
- * 
+ *
  * История версий:
  * 1.01
  *  + cfgSetAutoReplace теперь регистронезависимый
@@ -221,7 +221,7 @@ class Jevix{
         function cfgSetTagNoAutoBr($tags){
                 $this->_cfgSetTagsFlag($tags, self::TR_TAG_NO_AUTO_BR, true, false);
         }
-        
+
         /**
          * КОНФИГУРАЦИЯ: Тег необходимо вырезать вместе с контентом (script, iframe)
          * @param array|string $tags тег(и)
@@ -300,11 +300,11 @@ class Jevix{
      * @param string|array $params array of pairs array('name'=>attributeName, 'value'=>attributeValue, 'rewrite'=>true|false)
      */
     function cfgSetTagParamsAutoAdd($tag, $params){
-        if(!isset($this->tagsRules[$tag])) throw new Exception("Tag $tag is missing in allowed tags list");        
+        if(!isset($this->tagsRules[$tag])) throw new Exception("Tag $tag is missing in allowed tags list");
         if (is_array($params) and !isset($params[0])) $params = array($params);
         if(!isset($this->tagsRules[$tag][self::TR_PARAM_AUTO_ADD])) {
             $this->tagsRules[$tag][self::TR_PARAM_AUTO_ADD] = array();
-        }        
+        }
         foreach($params as $aParamValue){
             $this->tagsRules[$tag][self::TR_PARAM_AUTO_ADD][$aParamValue['name']] = array('value'=>$aParamValue['value'],'rewrite'=>$aParamValue['rewrite']);
         }
@@ -497,7 +497,7 @@ class Jevix{
          */
         protected function matchStr($str, $skipSpaces = false){
                 $this->saveState();
-                $len = strlen($str);
+                $len = mb_strlen($str, 'UTF-8');
                 $test = '';
                 while($len-- && $this->curChClass){
                         $test.=$this->curCh;
@@ -520,7 +520,7 @@ class Jevix{
          * @return string найденый символ или false
          */
         protected function skipUntilCh($ch){
-                $chPos = strpos($this->text, $ch, $this->curPos);
+                $chPos = mb_strpos($this->text, $ch, $this->curPos, 'UTF-8');
                 if($chPos){
                         return $this->goToPosition($chPos);
                 } else {
@@ -702,7 +702,7 @@ class Jevix{
                         $this->restoreState();
                         return false;
                 }
-                $name=strtolower($name);
+                $name=mb_strtolower($name, 'UTF-8');
                 // Пробуем получить список атрибутов тега
                 if($this->curCh != '>' && $this->curCh != '/') $this->tagParams($params);
 
@@ -741,7 +741,7 @@ class Jevix{
         }
 
         protected function tagParam(&$name, &$value){
-    $this->saveState();
+                $this->saveState();
                 if(!$this->name($name, true)) return false;
 
                 if(!$this->matchCh('=', true)){
@@ -808,7 +808,7 @@ class Jevix{
                         $this->restoreState();
                         return false;
                 }
-                $name=strtolower($name);
+                $name=mb_strtolower($name, 'UTF-8');
                 $this->skipSpaces();
                 if(!$this->matchCh('>')) {
                         $this->restoreState();
@@ -818,8 +818,8 @@ class Jevix{
         }
 
         protected function makeTag($tag, $params, $content, $short, $parentTag = null){
-        		$this->curParentTag=$parentTag;
-                $tag = strtolower($tag);
+                $this->curParentTag=$parentTag;
+                $tag = mb_strtolower($tag, 'UTF-8');
 
                 // Получаем правила фильтрации тега
                 $tagRules = isset($this->tagsRules[$tag]) ? $this->tagsRules[$tag] : null;
@@ -846,7 +846,7 @@ class Jevix{
 
                 $resParams = array();
                 foreach($params as $param=>$value){
-                        $param = strtolower($param);
+                        $param = mb_strtolower($param, 'UTF-8');
                         $value = trim($value);
                         if(empty($value)) continue;
 
@@ -922,12 +922,12 @@ class Jevix{
 
                 // Автодобавляемые параметры
                 if(!empty($tagRules[self::TR_PARAM_AUTO_ADD])){
-                	foreach($tagRules[self::TR_PARAM_AUTO_ADD] as $name => $aValue) {
-                    	// If there isn't such attribute - setup it
-                    	if(!array_key_exists($name, $resParams) or ($aValue['rewrite'] and $resParams[$name] != $aValue['value'])) {
-                        	$resParams[$name] = $aValue['value'];
-                    	}
-                	}
+                  foreach($tagRules[self::TR_PARAM_AUTO_ADD] as $name => $aValue) {
+                      // If there isn't such attribute - setup it
+                      if(!array_key_exists($name, $resParams) or ($aValue['rewrite'] and $resParams[$name] != $aValue['value'])) {
+                          $resParams[$name] = $aValue['value'];
+                      }
+                  }
                 }
 
                 // Пустой некороткий тег удаляем кроме исключений
@@ -1203,17 +1203,17 @@ class Jevix{
                                 // после пробелов снова возможно новое слово
                                 $newWord = true;
                         } elseif ($this->isAutoBrMode && $this->skipNL($brCount)){
-                                // Перенос строки                                
-                                if ($this->curParentTag 
-                                	and isset($this->tagsRules[$this->curParentTag])
-                                	and isset($this->tagsRules[$this->curParentTag][self::TR_TAG_NO_AUTO_BR]) 
-                                	and (is_null($this->openedTag) or isset($this->tagsRules[$this->openedTag][self::TR_TAG_NO_AUTO_BR])) 
-                                	) {
-                                	// пропускаем <br/>
+                                // Перенос строки
+                                if ($this->curParentTag
+                                  and isset($this->tagsRules[$this->curParentTag])
+                                  and isset($this->tagsRules[$this->curParentTag][self::TR_TAG_NO_AUTO_BR])
+                                  and (is_null($this->openedTag) or isset($this->tagsRules[$this->openedTag][self::TR_TAG_NO_AUTO_BR]))
+                                  ) {
+                                  // пропускаем <br/>
                                 } else {
-                                	$br = $this->br.$this->nl;
-                                	$text.= $brCount == 1 ? $br : $br.$br;	
-                                }                             
+                                  $br = $this->br.$this->nl;
+                                  $text.= $brCount == 1 ? $br : $br.$br;
+                                }
                                 // Помечаем что новая строка и новое слово
                                 $newLine = true;
                                 $newWord = true;
@@ -1252,7 +1252,7 @@ class Jevix{
                                 $this->getCh();
                         }
 
-                        if(!strlen($url)) {
+                        if(!mb_strlen($url, 'UTF-8')) {
                                 $this->restoreState();
                                 return false;
                         }
@@ -1265,7 +1265,7 @@ class Jevix{
                                 $this->getCh();
                         }
 
-                        if(!strlen($url)) {
+                        if(!mb_strlen($url, 'UTF-8')) {
                                 $this->restoreState();
                                 return false;
                         }
