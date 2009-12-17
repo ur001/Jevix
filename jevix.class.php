@@ -10,9 +10,13 @@
  * @version 1.01
  *
  * История версий:
+ * 1.1:
+ *  + cfgSetTagParamsAutoAdd() deprecated. Вместо него следует использовать cfgSetTagParamDefault() с более удобным синтаксисом
+ *  + Исправлен критический баг с обработкой атрибутов тегов https://code.google.com/p/jevix/issues/detail?id=1
+ *  + Удаление атрибутов тегов с пустым значением. Атрибуты без значений (checked, nowrap) теперь превращаются в checked="checked"
+ *  + Исправлен тест, проведена небольшая ревизия кода
  * 1.02:
  *  + Функции для работы со строками заменены на аналогичные mb_*, чтобы не перегружать через mbstring.func_overload (ev.y0ga@mail.ru)
- *  + Исправлен серьёзный баг с обработкой атрибутов тегов https://code.google.com/p/jevix/issues/detail?id=1
  * 1.01
  *  + cfgSetAutoReplace теперь регистронезависимый
  *  + Возможность указать через cfgSetTagIsEmpty теги с пустым содержанием, которые не будут адалены парсером (rus.engine)
@@ -296,21 +300,32 @@ class Jevix{
 		}
 	}
 
-    /**
-     * CONFIGURATION: Adding autoadd attributes and their values to tag. If the 'rewrite' set as true, the attribute value will be replaced
-     * @param string $tag tag
-     * @param string|array $params array of pairs array('name'=>attributeName, 'value'=>attributeValue, 'rewrite'=>true|false)
-     */
-    function cfgSetTagParamsAutoAdd($tag, $params){
-	if(!isset($this->tagsRules[$tag])) throw new Exception("Tag $tag is missing in allowed tags list");
-	if (is_array($params) and !isset($params[0])) $params = array($params);
-	if(!isset($this->tagsRules[$tag][self::TR_PARAM_AUTO_ADD])) {
-	    $this->tagsRules[$tag][self::TR_PARAM_AUTO_ADD] = array();
+	/**
+	 * CONFIGURATION: Adding autoadd attributes and their values to tag. If the 'rewrite' set as true, the attribute value will be replaced
+	 * @param string $tag tag
+	 * @param string|array $params array of pairs array('name'=>attributeName, 'value'=>attributeValue, 'rewrite'=>true|false)
+	 * @deprecated устаревший синтаксис. Используйте cfgSetTagParamAutoAdd
+	 */
+	function cfgSetTagParamsAutoAdd($tag, $params){
+		throw new Exception("cfgSetTagParamsAutoAdd() is Deprecated. Use cfgSetTagParamDefault() instead");
 	}
-	foreach($params as $aParamValue){
-	    $this->tagsRules[$tag][self::TR_PARAM_AUTO_ADD][$aParamValue['name']] = array('value'=>$aParamValue['value'],'rewrite'=>$aParamValue['rewrite']);
+
+	/**
+	 * КОНФИГУРАЦИЯ: Установка дефолтных значений для атрибутов тега
+	 * @param string $tag тег
+	 * @param string $param атрибут
+	 * @param string $value значение
+	 * @param boolean $isRewrite заменять указанное значение дефолтным
+	 */
+	function cfgSetTagParamDefault($tag, $param, $value, $isRewrite = false){
+		if(!isset($this->tagsRules[$tag])) throw new Exception("Tag $tag is missing in allowed tags list");
+
+		if(!isset($this->tagsRules[$tag][self::TR_PARAM_AUTO_ADD])) {
+			$this->tagsRules[$tag][self::TR_PARAM_AUTO_ADD] = array();
+		}
+
+		$this->tagsRules[$tag][self::TR_PARAM_AUTO_ADD][$param] = array('value'=>$value, 'rewrite'=>$isRewrite);
 	}
-    }
 
 
 	/**
@@ -749,7 +764,7 @@ class Jevix{
 		if(!$this->matchCh('=', true)){
 			// Стремная штука - параметр без значения <input type="checkbox" checked>, <td nowrap class=b>
 			if(($this->curCh=='>' || ($this->curChClass & self::LAT) == self::LAT)){
-				$value = null;
+				$value = $name;
 				return true;
 			} else {
 				$this->restoreState();
@@ -931,15 +946,21 @@ class Jevix{
 		      }
 		  }
 		}
-
+		
 		// Пустой некороткий тег удаляем кроме исключений
 		if (!isset($tagRules[self::TR_TAG_IS_EMPTY]) or !$tagRules[self::TR_TAG_IS_EMPTY]) {
 			if(!$short && empty($content)) return '';
 		}
 		// Собираем тег
 		$text='<'.$tag;
+
 		// Параметры
-		foreach($resParams as $param=>$value) $text.=' '.$param.'="'.$value.'"';
+		foreach($resParams as $param => $value) {
+			if (!empty($value)) {
+				$text.=' '.$param.'="'.$value.'"';
+			}
+		}
+		
 		// Закрытие тега (если короткий то без контента)
 		$text.= $short && $this->isXHTMLMode ? '/>' : '>';
 		if(isset($tagRules[self::TR_TAG_CONTAINER])) $text .= "\r\n";
