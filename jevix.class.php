@@ -12,6 +12,7 @@
  * История версий:
  * 1.02:
  *  + Функции для работы со строками заменены на аналогичные mb_*, чтобы не перегружать через mbstring.func_overload (ev.y0ga@mail.ru)
+ *  + Исправлен серьёзный баг с обработкой атрибутов тегов https://code.google.com/p/jevix/issues/detail?id=1
  * 1.01
  *  + cfgSetAutoReplace теперь регистронезависимый
  *  + Возможность указать через cfgSetTagIsEmpty теги с пустым содержанием, которые не будут адалены парсером (rus.engine)
@@ -91,8 +92,7 @@ class Jevix{
 	const STATE_INSIDE_PREFORMATTED_TAG = 5;
 
 	public $tagsRules = array();
-	public $entities0 = array('"'=>'&quot;', "'"=>'&#39;', '&'=>'&amp;', '<'=>'&lt;', '>'=>'&gt;');
-	public $entities1 = array();
+	public $entities1 = array('"'=>'&quot;', "'"=>'&#39;', '&'=>'&amp;', '<'=>'&lt;', '>'=>'&gt;');
 	public $entities2 = array('<'=>'&lt;', '>'=>'&gt;', '"'=>'&quot;');
 	public $textQuotes = array(array('«', '»'), array('„', '“'));
 	public $dash = " — ";
