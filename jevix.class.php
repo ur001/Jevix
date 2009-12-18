@@ -672,7 +672,7 @@ class Jevix{
 		} elseif(!empty($this->tagsRules[$tag][self::TR_TAG_NO_TYPOGRAPHY])) {
 			$this->noTypoMode = true;
 			$this->state = self::STATE_INSIDE_TAG;
-		} elseif(!empty($this->tagsRules[$tag][self::TR_TAG_CALLBACK])){
+		} elseif(array_key_exists($tag, $this->tagsRules) && array_key_exists(self::TR_TAG_CALLBACK, $this->tagsRules[$tag])){
 			$this->state = self::STATE_INSIDE_CALLBACK_TAG;
 		} else {
 			$this->state = self::STATE_INSIDE_TAG;
