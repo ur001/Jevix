@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Тестовый пример работы Jevix-а
  *
@@ -63,7 +63,11 @@ $jevix->cfgSetAutoLinkMode(true);
 // 13. Отключаем типографирование в определенном теге
 $jevix->cfgSetTagNoTypography('code');
 
-
+// 14. Ставим колбэк
+$jevix->cfgSetTagCallback('h6', 'test_callback');
+function test_callback($content){
+	return mb_strtoupper($content, 'UTF-8');
+}
 
 //Парсинг
 
@@ -89,6 +93,7 @@ BEGIN XSS test <img src=hhh="onclick="alert(document.cookie)> END XSS test
 <ol><li>Этот список</li><li>&nbsp;думаю станет</li><li>&nbsp;просто текстом.</li></ol>
 <ul><li>А этот список</li><li>должен</li><li>отобразится нормально.</li></ul>
 <img src="www.jpg" width="javascript:alert(1)" height="13" title="у этой картинки ширина будет 300px" onload="alert(1)" hspace="50%"/>
+<h6>Этот текст должен обработаться callback-функцией</h6>
 (c)2008 ur001(r)
 <a href="ur001.ru">а ещё парсер сам закрывает теги';
 
@@ -124,6 +129,7 @@ BEGIN XSS test <img src="http://hhh=&quot;onclick=&quot;alert(document.cookie)" 
 <ol><li>Этот список</li><li> думаю станет</li><li> просто текстом.</li></ol><br/>
 <ul><li>А этот список</li><li>должен</li><li>отобразится нормально.</li></ul><br/>
 <img src="http://www.jpg" height="13" title="у этой картинки ширина будет 300px" width="300px"/><br/>
+<h6>ЭТОТ ТЕКСТ ДОЛЖЕН ОБРАБОТАТЬСЯ CALLBACK-ФУНКЦИЕЙ</h6>
 ©2008 ur001®<br/>
 <a href="http://ur001.ru">а ещё парсер сам закрывает теги</a>
 -------------

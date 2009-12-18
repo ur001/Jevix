@@ -94,6 +94,7 @@ class Jevix{
 	const STATE_INSIDE_TAG = 3;
 	const STATE_INSIDE_NOTEXT_TAG = 4;
 	const STATE_INSIDE_PREFORMATTED_TAG = 5;
+	const STATE_INSIDE_CALLBACK_TAG = 6;
 
 	public $tagsRules = array();
 	public $entities1 = array('"'=>'&quot;', "'"=>'&#39;', '&'=>'&amp;', '<'=>'&lt;', '>'=>'&gt;');
@@ -149,6 +150,7 @@ class Jevix{
 	const TR_TAG_NO_TYPOGRAPHY = 12; // Отключение типографирования для тега
 	const TR_TAG_IS_EMPTY = 13;      // Не короткий тег с пустым содержанием имеет право существовать
 	const TR_TAG_NO_AUTO_BR = 14;    // Тег в котором не нужна авто-расстановка <br>
+	const TR_TAG_CALLBACK = 15;      // Тег обрабатывается callback-функцией
 
 	/**
 	 * Классы символов генерируются symclass.php
@@ -327,6 +329,15 @@ class Jevix{
 		$this->tagsRules[$tag][self::TR_PARAM_AUTO_ADD][$param] = array('value'=>$value, 'rewrite'=>$isRewrite);
 	}
 
+/**
+	 * КОНФИГУРАЦИЯ: Устанавливаем callback-функцию на обработку содержимого тега
+	 * @param string $tag тег
+	 * @param mixed $callback функция
+	 */
+	function cfgSetTagCallback($tag, $callback = null){
+		if(!isset($this->tagsRules[$tag])) throw new Exception("Тег $tag отсутствует в списке разрешённых тегов");
+		$this->tagsRules[$tag][self::TR_TAG_CALLBACK] = $callback;
+	}
 
 	/**
 	 * Автозамена
@@ -661,6 +672,8 @@ class Jevix{
 		} elseif(!empty($this->tagsRules[$tag][self::TR_TAG_NO_TYPOGRAPHY])) {
 			$this->noTypoMode = true;
 			$this->state = self::STATE_INSIDE_TAG;
+		} elseif(!empty($this->tagsRules[$tag][self::TR_TAG_CALLBACK])){
+			$this->state = self::STATE_INSIDE_CALLBACK_TAG;
 		} else {
 			$this->state = self::STATE_INSIDE_TAG;
 		}
@@ -671,6 +684,8 @@ class Jevix{
 		$content = '';
 		if($this->state == self::STATE_INSIDE_PREFORMATTED_TAG){
 			$this->preformatted($content, $tag);
+		} elseif($this->state == self::STATE_INSIDE_CALLBACK_TAG){
+			$this->callback($content, $tag);
 		} else {
 			$this->anyThing($content, $tag);
 		}
@@ -705,6 +720,28 @@ class Jevix{
 				if($isClosedTag && $tag == $insideTag) return;
 			}
 			$content.= isset($this->entities2[$this->curCh]) ? $this->entities2[$this->curCh] : $this->curCh;
+			$this->getCh();
+		}
+	}
+
+	protected function callback(&$content = '', $insideTag = null){
+		while($this->curChClass){
+			if($this->curCh == '<'){
+				$tag = '';
+				$this->saveState();
+				// Пытаемся найти закрывающийся тег
+				$isClosedTag = $this->tagClose($tag);
+				// Возвращаемся назад, если тег был найден
+				if($isClosedTag) $this->restoreState();
+				// Если закрылось то, что открылось - заканчиваем и возвращаем true
+				if($isClosedTag && $tag == $insideTag) {
+					if ($callback = $this->tagsRules[$tag][self::TR_TAG_CALLBACK]) {
+						$content = call_user_func($callback, $content);
+					}
+					return;
+				}
+			}
+			$content.= $this->curCh;
 			$this->getCh();
 		}
 	}
@@ -900,7 +937,7 @@ class Jevix{
 							continue(2);
 						}
 						// Первый символ должен быть a-z0-9 или #!
-						 if(!preg_match('/^[a-z0-9\/\#]/ui', $value)) {
+						if(!preg_match('/^[a-z0-9\/\#]/ui', $value)) {
 							$this->eror('URI: Первый символ адреса должен быть буквой или цифрой');
 							continue(2);
 						}
