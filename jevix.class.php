@@ -10,6 +10,8 @@
  * @version 1.01
  *
  * История версий:
+ * 1.11:
+ *  + Исправлены ошибки из-за которых удалялись теги и аттрибуты со значением "0". Спасибо Dmitry Shurupov (dmitry.shurupov@trueoffice.ru)
  * 1.1:
  *  + cfgSetTagParamsAutoAdd() deprecated. Вместо него следует использовать cfgSetTagParamDefault() с более удобным синтаксисом
  *  + Исправлен критический баг с обработкой атрибутов тегов https://code.google.com/p/jevix/issues/detail?id=1
@@ -902,7 +904,7 @@ class Jevix{
 		foreach($params as $param=>$value){
 			$param = mb_strtolower($param, 'UTF-8');
 			$value = trim($value);
-			if(empty($value)) continue;
+			if($value == '') continue;
 
 			// Атрибут тега разрешён? Какие возможны значения? Получаем список правил
 			$paramAllowedValues = isset($tagRules[self::TR_PARAM_ALLOWED][$param]) ? $tagRules[self::TR_PARAM_ALLOWED][$param] : false;
@@ -970,7 +972,7 @@ class Jevix{
 		$requiredParams = isset($tagRules[self::TR_PARAM_REQUIRED]) ? array_keys($tagRules[self::TR_PARAM_REQUIRED]) : array();
 		if($requiredParams){
 			foreach($requiredParams as $requiredParam){
-				if(empty($resParams[$requiredParam])) return $content;
+				if(!isset($resParams[$requiredParam])) return $content;
 			}
 		}
 
@@ -986,14 +988,14 @@ class Jevix{
 		
 		// Пустой некороткий тег удаляем кроме исключений
 		if (!isset($tagRules[self::TR_TAG_IS_EMPTY]) or !$tagRules[self::TR_TAG_IS_EMPTY]) {
-			if(!$short && empty($content)) return '';
+			if(!$short && $content == '') return '';
 		}
 		// Собираем тег
 		$text='<'.$tag;
 
 		// Параметры
 		foreach($resParams as $param => $value) {
-			if (!empty($value)) {
+			if ($value != '') {
 				$text.=' '.$param.'="'.$value.'"';
 			}
 		}
@@ -1035,7 +1037,7 @@ class Jevix{
 				// Пропускаем пробелы после <br> и запрещённых тегов, которые вырезаются парсером
 				if ($tag=='br') {
 					$this->skipNL();
-				} elseif (empty($tagText)){
+				} elseif ($tagText == ''){
 					$this->skipSpaces();
 				}
 
