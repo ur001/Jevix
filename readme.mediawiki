@@ -22,37 +22,35 @@
 * XSS-фильтация, валидация, обработка HTML и типографирование в одном флаконе, в одном файле
 
 == Недостатки ==
-* Jevix разделяет строки '''&lt;br&gt;'''-ами. Делать '''&lt;p&gtабзацы&lt;/p&gt''' он не умеет, и, в существующей архитектурной концепции вряд ли научится
+* Jevix разделяет строки '''&lt;br&gt;'''-ами. Делать '''&lt;p&gt;абзацы&lt;/p&gt;''' он не умеет, и, в существующей архитектурной концепции вряд ли научится
 * Автор больше не развивает проект, перешёл на Python и постепенно забывает синтаксис PHP. Однако PULL-реквесты приветствуются
 
 ==Пример использования==
-```php
-<?
-require('jevix.class.php');
-
-$jevix = new Jevix();
-
-//Конфигурация
-
-// Устанавливаем разрешённые теги. (Все не разрешенные теги считаются запрещенными.)
-$jevix->cfgAllowTags(array('a', 'img', 'strong', 'ul', 'li', 'h1', 'h2'));
-
-// Устанавливаем разрешённые параметры тегов.
-$jevix->cfgAllowTagParams('a', array('title', 'href'));
-
-// Устанавливаем параметры тегов являющиеся обязяательными. Без них вырезает тег оставляя содержимое.
-$jevix->cfgSetTagParamsRequired('a', 'href');
-
-// Устанавливаем теги которые может содержать тег контейнер
-$jevix->cfgSetTagChilds('ul', 'li', true, false);
-
-// Устанавливаем атрибуты тегов, которые будут добавлятся автоматически
-$jevix->cfgSetTagParamsAutoAdd('a', array('rel' => 'nofollow'));
-
-//Парсинг
-$res = $jevix->parse('...тут...мог...бы...быть...ваш...текст...');
-?>
-```
+    <?
+    require('jevix.class.php');
+    
+    $jevix = new Jevix();
+    
+    //Конфигурация
+    
+    // Устанавливаем разрешённые теги. (Все не разрешенные теги считаются запрещенными.)
+    $jevix->cfgAllowTags(array('a', 'img', 'strong', 'ul', 'li', 'h1', 'h2'));
+    
+    // Устанавливаем разрешённые параметры тегов.
+    $jevix->cfgAllowTagParams('a', array('title', 'href'));
+    
+    // Устанавливаем параметры тегов являющиеся обязяательными. Без них вырезает тег оставляя содержимое.
+    $jevix->cfgSetTagParamsRequired('a', 'href');
+    
+    // Устанавливаем теги которые может содержать тег контейнер
+    $jevix->cfgSetTagChilds('ul', 'li', true, false);
+    
+    // Устанавливаем атрибуты тегов, которые будут добавлятся автоматически
+    $jevix->cfgSetTagParamsAutoAdd('a', array('rel' => 'nofollow'));
+    
+    //Парсинг
+    $res = $jevix->parse('...тут...мог...бы...быть...ваш...текст...');
+    ?>
 
 == Системные требования ==
 * PHP5
@@ -60,9 +58,7 @@ $res = $jevix->parse('...тут...мог...бы...быть...ваш...текст
 * UTF-8
 
 == Возможные настройки в .htaccess для корректной рботы mbstring ==
-```
-php_value       mbstring.func_overload      0
-php_value       default_charset             UTF-8
-php_value       mbstring.language           Russian
-php_value       mbstring.internal_encoding  UTF-8
-```
+    php_value       mbstring.func_overload      0
+    php_value       default_charset             UTF-8
+    php_value       mbstring.language           Russian
+    php_value       mbstring.internal_encoding  UTF-8
