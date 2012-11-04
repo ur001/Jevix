@@ -1,0 +1,20 @@
+{
+    "name": "sharom/jevix",
+    "description": "Library for html filtering",
+    "authors": [
+        {
+            "name": "ur001"
+        },
+        {
+            "name": "Roman Shamritskiy",
+            "email": "roman@litgroup.ru"
+        }
+    ],
+    "autoload": {
+        "psr-0": { "Jevix": "lib/" }
+    },
+
+    "require": {
+
+    }
+}

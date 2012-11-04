@@ -71,7 +71,8 @@
  *      + Первый бета-релиз
  */
 
-class Jevix{
+class Jevix
+{
 	const PRINATABLE  = 0x1;
 	const ALPHA       = 0x2;
 	const LAT	 = 0x4;

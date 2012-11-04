@@ -7,7 +7,7 @@
  * Этот файл необходим только чтобы изменить правила классификации
  */
 
-require 'jevix.class.php';
+require 'lib/Jevix.php';
 
 //РЕНДЕРИНГ КЛАССИФИКАТОРА СИМВОЛОВ
 function addChClass(&$tbl, $chars, $class, $add = false){
