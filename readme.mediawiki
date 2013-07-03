@@ -7,6 +7,7 @@
 * Один из ведущих русскоязычных интернет-ресурсов, посвящённых nix системам и миру Open Source [http://www.nixp.ru/ NIXP.RU]
 * Свободные движки для блого-социальных сетей и тематических сообществ [http://livestreet.ru/ LiveStreet], [http://bigstreet.ru/ BigStreet] и [http://explay.s/ Explay CMS]
 * Система управления сайтами [http://cogear.ru/ Сogear] на [http://codeigniter.com/ CodeIgniter]
+* Многофункциональная система управления сайтами [https://github.com/altocms/altocms Alto CMS]
 * [http://www.coolweb.su/blog/7.html Плагин для Codeigniter]. Работает в связке с GeSHi для подсветки синтаксиса
 * Плагин для MODx CMS: [http://bezumkin.ru/modx/jevix/ домашняя страница], [https://github.com/bezumkin/modx-jevix на GitHub]
 * Компонент для удобного использования [https://github.com/tokolist/yii-components/blob/master/protected/extensions/yiicomp/widgets/YiiJevix/readme_ru.md Jevix в Yii]
