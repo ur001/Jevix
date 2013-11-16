@@ -1,10 +1,13 @@
 {
-    "name": "sharom/jevix",
+    "name": "agelxnash/jevix",
     "description": "Library for html filtering",
     "authors": [
         {
             "name": "ur001"
         },
+		{
+			"name" : "livestreet framework"
+		},
         {
             "name": "Roman Shamritskiy",
             "email": "roman@litgroup.ru"
