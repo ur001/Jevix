@@ -57,7 +57,7 @@
 * Модуль mbstring
 * UTF-8
 
-== Возможные настройки в .htaccess для корректной рботы mbstring ==
+== Возможные настройки в .htaccess для корректной работы mbstring ==
     php_value       mbstring.func_overload      0
     php_value       default_charset             UTF-8
     php_value       mbstring.language           Russian
