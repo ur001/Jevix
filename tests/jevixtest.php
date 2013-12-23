@@ -110,6 +110,20 @@ BEGIN XSS test <img src=hhh="onclick="alert(document.cookie)> END XSS test
 <pre><pre>Проверка вложенных преформатированных тегов</pre></pre>
 Знаки препинания на конце автоматических url: http://jevix.ru!
 Вставка видео <video>http://www.youtube.com/watch?v=iDkrSD8fOBo</video> через автозамену регулярками
+
+Проверка прохождения url
+<img src="yandex.st/morda-logo/i/logo.svg" />
+<img src="//yandex.st/morda-logo/i/logo.svg" />
+<img src="http://yandex.st/morda-logo/i/logo.svg" />
+<img src="https://yandex.st/morda-logo/i/logo.svg" />
+<a href="path/">Относительная ссылка</a>
+<a href="../path">Относительная ссылка наверх</a>
+<a href="/path/">Относительная ссылка от корня</a>
+<a href="//yandex.st/morda-logo/i/logo.svg">Ссылка ipv6</a>
+<a href="yandex.st">Ссылка без указания протокола</a>
+<a href="mailto:mail@yandex.ru">Почта с указанием mailto</a>
+<a href="mail@yandex.ru">Почта без указания mailto</a>
+
 <a href="ur001.ru">а ещё парсер сам закрывает теги
 ';
 
@@ -133,7 +147,7 @@ print_r($errors);
  — првет, лишние br нам не страшны<br/>
  — автозамена ссылок с http:// и www: <a href="http://www.habrahabr.ru">www.habrahabr.ru</a>, <a href="http://google.com">google.com</a><br/>
 <br/>
-BEGIN XSS test <img src="http://hhh=&quot;onclick=&quot;alert(document.cookie)" width="300px" height="300px"/>END XSS test<br/>
+BEGIN XSS test <img src="hhh=&quot;onclick=&quot;alert(document.cookie)" width="300px" height="300px"/>END XSS test<br/>
 <br/>
 переходим к &lt;тегам&gt;<br/>
 список требуемых<br/>
@@ -144,12 +158,26 @@ BEGIN XSS test <img src="http://hhh=&quot;onclick=&quot;alert(document.cookie)" 
 &lt;b&gt;всё&lt;/b&gt; преобразуем в HTML сущности. Оставляем пробелы      и переносы строк</pre><br/>
 <ol><li>Этот список</li><li> думаю станет</li><li> просто текстом.</li></ol><br/>
 <ul><li>А этот список</li><li>должен</li><li>отобразится нормально.</li></ul><br/>
-<img src="http://www.jpg" height="13" title="у этой картинки ширина будет 300px" width="300px"/><br/>
+<img src="www.jpg" height="13" title="у этой картинки ширина будет 300px" width="300px"/><br/>
 <h6>ЭТОТ ТЕКСТ ДОЛЖЕН ОБРАБОТАТЬСЯ CALLBACK-ФУНКЦИЕЙ</h6><br/>
 ©2008 ur001®<br/>
 <pre>&lt;pre&gt;Проверка вложенных преформатированных тегов&lt;/pre&gt;</pre><br/>
 Знаки препинания на конце автоматических url: <a href="http://jevix.ru">jevix.ru</a>!<br/>
 Вставка видео <iframe width="700" height="394" src="http://www.youtube.com/embed/iDkrSD8fOBo" frameborder="0" allowfullscreen></iframe> через автозамену регулярками<br/>
+<br/>
+Проверка прохождения url<br/>
+<img src="http://yandex.st/morda-logo/i/logo.svg" width="300px" height="300px"/><br/>
+<img src="//yandex.st/morda-logo/i/logo.svg" width="300px" height="300px"/><br/>
+<img src="http://yandex.st/morda-logo/i/logo.svg" width="300px" height="300px"/><br/>
+<img src="https://yandex.st/morda-logo/i/logo.svg" width="300px" height="300px"/><br/>
+<a href="path/">Относительная ссылка</a><br/>
+<a href="../path">Относительная ссылка наверх</a><br/>
+<a href="/path/">Относительная ссылка от корня</a><br/>
+<a href="//yandex.st/morda-logo/i/logo.svg">Ссылка ipv6</a><br/>
+<a href="http://yandex.st">Ссылка без указания протокола</a><br/>
+<a href="mailto:mail@yandex.ru">Почта с указанием mailto</a><br/>
+<a href="mailto:mail@yandex.ru">Почта без указания mailto</a><br/>
+<br/>
 <a href="http://ur001.ru">а ещё парсер сам закрывает теги<br/>
 </a>
 -------------

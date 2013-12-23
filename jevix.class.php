@@ -998,32 +998,58 @@ class Jevix{
 
 					case '#link':
 						// Ява-скрипт в ссылке
-						if(preg_match('/javascript:/ui', $value)) {
+						if (preg_match('/javascript:/ui', $value)) {
 							$this->eror('Попытка вставить JavaScript в URI');
 							continue(2);
 						}
-						// Первый символ должен быть a-z0-9 или #!
-						if(!preg_match('/^[a-z0-9\/\#]/ui', $value)) {
+						// Первый символ должен быть a-z, 0-9, #, / или точка
+						elseif (!preg_match('/^[a-z0-9\/\#\.]/ui', $value)) {
 							$this->eror('URI: Первый символ адреса должен быть буквой или цифрой');
 							continue(2);
 						}
-						// HTTP в начале если нет
-						if(!preg_match('/^(http|https|ftp):\/\//ui', $value) && !preg_match('/^(\/|\#)/ui', $value) ) $value = 'http://'.$value;
+						// Если в ссылке указан email
+						elseif (preg_match('/.+@.+\..+/i', $value)) {
+							// Но нет протокола - добавляем
+							if (!preg_match('/^(mailto):/ui', $value)) {
+								$value = 'mailto:'.$value;
+							}
+						}
+						// Пропускаем относительные url и ipv6
+						elseif (preg_match('/^(\.\.\/|\/)/ui', $value)) {
+							break;
+						}
+						// Если нет указания протокола:
+						elseif (!preg_match('/^(http|https|ftp):\/\//ui', $value)) {
+							// Но адрес похож на домен
+							if (preg_match('/\.[a-z]{2,}+/ui', $value)) {
+								$value = 'http://'.$value;
+							}
+							else {
+								//$value = '/'.$value;
+							}
+						}
 						break;
 
 					case '#image':
 						// Ява-скрипт в пути к картинке
-						if(preg_match('/javascript:/ui', $value)) {
+						if (preg_match('/javascript:/ui', $value)) {
 							$this->eror('Попытка вставить JavaScript в пути к изображению');
 							continue(2);
 						}
-						// HTTP в начале если нет
-						if(!preg_match('/^(http|https):\/\//ui', $value) && !preg_match('/^\//ui', $value)) $value = 'http://'.$value;
-						break;
-
-					default:
-						$this->eror("Неверное описание атрибута тега в настройке Jevix: $param => $paramAllowedValues");
-						continue(2);
+						// Пропускаем относительные url и ipv6
+						elseif (preg_match('/^(\.\.\/|\/)/ui', $value)) {
+							break;
+						}
+						// Если нет указания протокола:
+						elseif (!preg_match('/^(http|https):\/\//ui', $value)) {
+							// Но адрес похож на домен с картинкой, то добавляем http
+							if (preg_match('/\.[a-z]{2,}+.*\./ui', $value)) {
+								$value = 'http://'.$value;
+							}
+							else {
+								//$value = '/'.$value;
+							}
+						}
 						break;
 				}
 			}
