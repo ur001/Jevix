@@ -12,7 +12,7 @@ $jevix = new Jevix();
 //Конфигурация
 
 // 1. Устанавливаем разрешённые теги. (Все не разрешенные теги считаются запрещенными.)
-$jevix->cfgAllowTags(array('a', 'img', 'i', 'b', 'u', 'em', 'strong', 'nobr', 'li', 'ol', 'ul', 'sup', 'abbr', 'pre', 'acronym', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'adabracut', 'br', 'code'));
+$jevix->cfgAllowTags(array('a', 'img', 'i', 'b', 'u', 'em', 'strong', 'nobr', 'li', 'ol', 'ul', 'sup', 'abbr', 'pre', 'acronym', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'adabracut', 'br', 'code', 'video'));
 
 // 2. Устанавливаем коротие теги. (не имеющие закрывающего тега)
 $jevix->cfgSetTagShort(array('br','img'));
@@ -69,6 +69,18 @@ function test_callback($content){
 	return mb_strtoupper($content, 'UTF-8');
 }
 
+// 15. Автозамена тегов video на iframe с youtube
+$jevix->cfgSetAutoPregReplace(
+	array(
+		'/<video>http:\/\/(?:www\.|)youtube\.com\/watch\?v=([a-zA-Z0-9_\-]+)(&.+)?<\/video>/Ui',
+		'/<video>http:\/\/(?:www\.|)youtu\.be\/([a-zA-Z0-9_\-]+)(&.+)?<\/video>/Ui',
+	),
+	array(
+		'<iframe width="700" height="394" src="http://www.youtube.com/embed/$1" frameborder="0" allowfullscreen></iframe>',
+		'<iframe width="700" height="394" src="http://www.youtube.com/embed/$1" frameborder="0" allowfullscreen></iframe>',
+	)
+);
+
 //Парсинг
 
 // Исходный текст
@@ -97,6 +109,7 @@ BEGIN XSS test <img src=hhh="onclick="alert(document.cookie)> END XSS test
 (c)2008 ur001(r)
 <pre><pre>Проверка вложенных преформатированных тегов</pre></pre>
 Знаки препинания на конце автоматических url: http://jevix.ru!
+Вставка видео <video>http://www.youtube.com/watch?v=iDkrSD8fOBo</video> через автозамену регулярками
 <a href="ur001.ru">а ещё парсер сам закрывает теги
 ';
 
@@ -124,7 +137,7 @@ BEGIN XSS test <img src="http://hhh=&quot;onclick=&quot;alert(document.cookie)" 
 <br/>
 переходим к &lt;тегам&gt;<br/>
 список требуемых<br/>
-список <b>разрешённых</b> и запрещённых тегов, их параметров и другие настройки можно задать в <a href="#" rel="123">конфигурации</a><br/>
+список <b>разрешённых</b> и запрещённых тегов, их параметров и другие настройки можно задать в <a href="#">конфигурации</a><br/>
 защита от XSS <br/>
 <code>в теге &quot;code&quot; © ничего не - типогрфируем</code><br/>
 <pre>в теге &quot;pre&quot;
@@ -132,11 +145,13 @@ BEGIN XSS test <img src="http://hhh=&quot;onclick=&quot;alert(document.cookie)" 
 <ol><li>Этот список</li><li> думаю станет</li><li> просто текстом.</li></ol><br/>
 <ul><li>А этот список</li><li>должен</li><li>отобразится нормально.</li></ul><br/>
 <img src="http://www.jpg" height="13" title="у этой картинки ширина будет 300px" width="300px"/><br/>
-<h6>ЭТОТ ТЕКСТ ДОЛЖЕН ОБРАБОТАТЬСЯ CALLBACK-ФУНКЦИЕЙ</h6>
+<h6>ЭТОТ ТЕКСТ ДОЛЖЕН ОБРАБОТАТЬСЯ CALLBACK-ФУНКЦИЕЙ</h6><br/>
 ©2008 ur001®<br/>
 <pre>&lt;pre&gt;Проверка вложенных преформатированных тегов&lt;/pre&gt;</pre><br/>
-Знаки препинания на конце автоматических url: <a href="http://jevix.ru">yandex.ru</a>!<br/>
-<a href="http://ur001.ru">а ещё парсер сам закрывает теги</a>
+Знаки препинания на конце автоматических url: <a href="http://jevix.ru">jevix.ru</a>!<br/>
+Вставка видео <iframe width="700" height="394" src="http://www.youtube.com/embed/iDkrSD8fOBo" frameborder="0" allowfullscreen></iframe> через автозамену регулярками<br/>
+<a href="http://ur001.ru">а ещё парсер сам закрывает теги<br/>
+</a>
 -------------
 ошибки:
 Array
@@ -144,23 +159,23 @@ Array
     [0] => Array
         (
             [message] => Недопустимое значение для атрибута тега img width=javascript:alert(1). Ожидалось число
-            [pos] => 1287
+            [pos] => 1293
             [ch] =>
 
             [line] => 0
             [str] =>
-©2008 u
+<h6>Это
         )
 
     [1] => Array
         (
             [message] => Недопустимое значение для атрибута тега img hspace=50%. Ожидалось число
-            [pos] => 1287
+            [pos] => 1293
             [ch] =>
 
             [line] => 0
             [str] =>
-©2008 u
+<h6>Это
         )
 
 )

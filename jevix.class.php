@@ -123,6 +123,7 @@ class Jevix{
 	protected $tagsStack;
 	protected $openedTag;
 	protected $autoReplace; // Автозамена
+	protected $autoPregReplace; // Автозамена с поддержкой регулярных выражений
 	protected $isXHTMLMode  = true; // <br/>, <img/>
 	protected $isAutoBrMode = true; // \n = <br/>
 	protected $isAutoLinkMode = true;
@@ -352,6 +353,16 @@ class Jevix{
 	}
 
 	/**
+	 * Автозамена с поддержкой регулярных выражений
+	 *
+	 * @param array $from с
+	 * @param array $to на
+	 */
+	function cfgSetAutoPregReplace($from, $to){
+		$this->autoPregReplace = array('from' => $from, 'to' => $to);
+	}
+
+	/**
 	 * Включение или выключение режима XTML
 	 *
 	 * @param boolean $isXHTMLMode
@@ -395,6 +406,21 @@ class Jevix{
 		$this->quotesOpened = 0;
 		$this->noTypoMode = false;
 
+		// Автозамена с регулярными выражениями
+		$replacements = array();
+		if(!empty($this->autoPregReplace)){
+			foreach ($this->autoPregReplace['from'] as $k => $v) {
+				preg_match_all($v, $text, $matches);
+				foreach ($matches[0] as $from) {
+					$to = preg_replace($v, $this->autoPregReplace['to'][$k], $from);
+					$hash = sha1(serialize($from));
+
+					$replacements[$hash] = $to;
+					$text = str_replace($from, $hash, $text);
+				}
+			}
+		}
+
 		// Авто растановка BR?
 		if($this->isAutoBrMode) {
 			$this->text = preg_replace('/<br\/?>(\r\n|\n\r|\n)?/ui', $this->nl, $text);
@@ -402,10 +428,6 @@ class Jevix{
 			$this->text = $text;
 		}
 
-
-		if(!empty($this->autoReplace)){
-			$this->text = str_ireplace($this->autoReplace['from'], $this->autoReplace['to'], $this->text);
-		}
 		$this->textBuf = $this->strToArray($this->text);
 		$this->textLen = count($this->textBuf);
 		$this->getCh();
@@ -418,6 +440,15 @@ class Jevix{
 		$this->skipSpaces();
 		$this->anyThing($content);
 		$errors = $this->errors;
+
+		if(!empty($this->autoReplace)){
+			$content = str_ireplace($this->autoReplace['from'], $this->autoReplace['to'], $content);
+		}
+
+		if (!empty($replacements)) {
+			$content = str_replace(array_keys($replacements), $replacements, $content);
+		}
+
 		return $content;
 	}
 
