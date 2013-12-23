@@ -95,7 +95,9 @@ BEGIN XSS test <img src=hhh="onclick="alert(document.cookie)> END XSS test
 <img src="www.jpg" width="javascript:alert(1)" height="13" title="у этой картинки ширина будет 300px" onload="alert(1)" hspace="50%"/>
 <h6>Этот текст должен обработаться callback-функцией</h6>
 (c)2008 ur001(r)
-<a href="ur001.ru">а ещё парсер сам закрывает теги';
+<pre><pre>Проверка вложенных преформатированных тегов</pre></pre>
+<a href="ur001.ru">а ещё парсер сам закрывает теги
+';
 
 // Переменная, в которую будут записыватся ошибки
 $errors = null;
@@ -131,6 +133,7 @@ BEGIN XSS test <img src="http://hhh=&quot;onclick=&quot;alert(document.cookie)" 
 <img src="http://www.jpg" height="13" title="у этой картинки ширина будет 300px" width="300px"/><br/>
 <h6>ЭТОТ ТЕКСТ ДОЛЖЕН ОБРАБОТАТЬСЯ CALLBACK-ФУНКЦИЕЙ</h6>
 ©2008 ur001®<br/>
+<pre>&lt;pre&gt;Проверка вложенных преформатированных тегов&lt;/pre&gt;</pre><br/>
 <a href="http://ur001.ru">а ещё парсер сам закрывает теги</a>
 -------------
 ошибки:
