@@ -123,6 +123,8 @@ class Jevix{
 	protected $tagsStack;
 	protected $openedTag;
 	protected $autoReplace; // Автозамена
+	protected $linkProtocolAllow=array();
+	protected $linkProtocolAllowDefault=array('http','https','ftp');
 	protected $isXHTMLMode  = true; // <br/>, <img/>
 	protected $isAutoBrMode = true; // \n = <br/>
 	protected $isAutoLinkMode = true;
@@ -152,7 +154,10 @@ class Jevix{
 	const TR_TAG_NO_TYPOGRAPHY = 12; // Отключение типографирования для тега
 	const TR_TAG_IS_EMPTY = 13;      // Не короткий тег с пустым содержанием имеет право существовать
 	const TR_TAG_NO_AUTO_BR = 14;    // Тег в котором не нужна авто-расстановка <br>
-	const TR_TAG_CALLBACK = 15;      // Тег обрабатывается callback-функцией
+	const TR_TAG_CALLBACK = 15;      // Тег обрабатывается callback-функцией - в обработку уходит только контент тега(короткие теги не обрабатываются)
+	const TR_TAG_BLOCK_TYPE = 16;    // Тег после которого не нужна автоподстановка доп. <br> 
+	const TR_TAG_CALLBACK_FULL = 17;    // Тег обрабатывается callback-функцией - в обработку уходит весь тег
+	const TR_PARAM_COMBINATION = 18;    // Проверка на возможные комбинации значений параметров тега
 
 	/**
 	 * Классы символов генерируются symclass.php
@@ -240,6 +245,14 @@ class Jevix{
 		$this->_cfgSetTagsFlag($tags, self::TR_TAG_CUT, true);
 	}
 
+	/**
+ 	* КОНФИГУРАЦИЯ: После тега не нужно добавлять дополнительный <br/> 
+ 	* @param array|string $tags тег(и) 
+ 	*/ 
+	function cfgSetTagBlockType($tags){
+		$this->_cfgSetTagsFlag($tags, self::TR_TAG_BLOCK_TYPE, true);
+	}
+	
 	/**
 	 * КОНФИГУРАЦИЯ: Добавление разрешённых параметров тега
 	 * @param string $tag тег
@@ -331,7 +344,7 @@ class Jevix{
 		$this->tagsRules[$tag][self::TR_PARAM_AUTO_ADD][$param] = array('value'=>$value, 'rewrite'=>$isRewrite);
 	}
 
-/**
+	/**
 	 * КОНФИГУРАЦИЯ: Устанавливаем callback-функцию на обработку содержимого тега
 	 * @param string $tag тег
 	 * @param mixed $callback функция
@@ -342,6 +355,55 @@ class Jevix{
 	}
 
 	/**
+	 * КОНФИГУРАЦИЯ: Устанавливаем callback-функцию на обработку содержимого тега
+	 * @param string $tag тег
+	 * @param mixed $callback функция
+	 */
+	function cfgSetTagCallbackFull($tag, $callback = null){
+		if(!isset($this->tagsRules[$tag])) throw new Exception("Тег $tag отсутствует в списке разрешённых тегов");
+		$this->tagsRules[$tag][self::TR_TAG_CALLBACK_FULL] = $callback;
+	}
+
+	/**
+	 * КОНФИГУРАЦИЯ: Устанавливаем комбинации значений параметров для тега
+	 *
+	 * @param string $tag тег
+	 * @param string $param атрибут
+	 * @param array $aCombinations Список комбинаций значений. Пример: array('myvalue'=>array('attr1'=>array('one','two'),'attr2'=>'other'))
+	 * @param bool $bRemove Удаляеть тег или нет, если в списке нет значения основного атрибута
+	 */
+	function cfgSetTagParamCombination($tag, $param, $aCombinations,$bRemove=false){
+		if(!isset($this->tagsRules[$tag])) throw new Exception("Tag $tag is missing in allowed tags list");
+
+		if(!isset($this->tagsRules[$tag][self::TR_PARAM_COMBINATION])) {
+			$this->tagsRules[$tag][self::TR_PARAM_COMBINATION] = array();
+		}
+
+		/**
+		 * Переводим в нижний регистр значений параметров
+		 * Ужасный код
+		 */
+		$aCombinationsResult=array();
+		foreach($aCombinations as $k=>$aAttr) {
+			$aAttrResult=array();
+			foreach($aAttr as $kk => $mValue) {
+				if (is_string($mValue)) {
+					$mValue=mb_strtolower($mValue);
+				} elseif (is_array($mValue)) {
+					foreach($mValue as $kkk=>$vvv) {
+						if (is_string($vvv)) {
+							$mValue[$kkk]=mb_strtolower($vvv);
+						}
+					}
+				}
+				$aAttrResult[$kk]=$mValue;
+			}
+			$aCombinationsResult[mb_strtolower($k)]=$aAttrResult;
+		}
+		$this->tagsRules[$tag][self::TR_PARAM_COMBINATION][$param] = array('combination'=>$aCombinationsResult,'remove'=>$bRemove);
+	}
+
+	/**
 	 * Автозамена
 	 *
 	 * @param array $from с
@@ -349,6 +411,23 @@ class Jevix{
 	 */
 	function cfgSetAutoReplace($from, $to){
 		$this->autoReplace = array('from' => $from, 'to' => $to);
+	}
+
+	/**
+	 * Устанавливает список разрешенных протоколов для ссылок (http, ftp и т.п.)
+	 *
+	 * @param array $aProtocol Список протоколов
+	 * @param bool $bClearDefault Удалить дефолтные протоколы?
+	 */
+	function cfgSetLinkProtocolAllow($aProtocol, $bClearDefault=false){
+		if (!is_array($aProtocol)) {
+			$aProtocol=array($aProtocol);
+		}
+		if ($bClearDefault) {
+			$this->linkProtocolAllow=$aProtocol;
+		} else {
+			$this->linkProtocolAllow=array_merge($this->linkProtocolAllowDefault,$aProtocol);
+		}
 	}
 
 	/**
@@ -911,9 +990,29 @@ class Jevix{
 			if(empty($paramAllowedValues)) continue;
 
 			// Если есть список разрешённых параметров тега
-			if(is_array($paramAllowedValues) && !in_array($value, $paramAllowedValues)) {
-				$this->eror("Недопустимое значение для атрибута тега $tag $param=$value");
-				continue;
+			if (is_array($paramAllowedValues)) {
+				// проверка на список доменов
+				if (isset($paramAllowedValues['#domain']) and is_array($paramAllowedValues['#domain'])) {
+					if(preg_match('/javascript:/ui', $value)) {
+						$this->eror('Попытка вставить JavaScript в URI');
+						continue;
+					}
+					$bOK=false;
+					foreach ($paramAllowedValues['#domain'] as $sDomain) {
+						$sDomain=preg_quote($sDomain);						
+						if (preg_match("@^(http|https|ftp)://([\w\d]+\.)?{$sDomain}/@ui",$value)) {							
+							$bOK=true;
+							break;
+						}
+					}
+					if (!$bOK) {
+						$this->eror("Недопустимое значение для атрибута тега $tag $param=$value");
+						continue;
+					}
+				} elseif (!in_array($value, $paramAllowedValues)) {
+					$this->eror("Недопустимое значение для атрибута тега $tag $param=$value");
+					continue;
+				}
 			// Если атрибут тега помечен как разрешённый, но правила не указаны - смотрим в массив стандартных правил для атрибутов
 			} elseif($paramAllowedValues === true && !empty($this->defaultTagParamRules[$param])){
 				$paramAllowedValues = $this->defaultTagParamRules[$param];
@@ -944,7 +1043,8 @@ class Jevix{
 							continue(2);
 						}
 						// HTTP в начале если нет
-						if(!preg_match('/^(http|https|ftp):\/\//ui', $value) && !preg_match('/^(\/|\#)/ui', $value) ) $value = 'http://'.$value;
+						$sProtocols=join('|',$this->linkProtocolAllow ? $this->linkProtocolAllow : $this->linkProtocolAllowDefault);
+						if(!preg_match('/^('.$sProtocols.'):\/\//ui', $value) && !preg_match('/^(\/|\#)/ui', $value) && !preg_match('/^(mailto):/ui', $value) ) $value = 'http://'.$value;
 						break;
 
 					case '#image':
@@ -990,22 +1090,73 @@ class Jevix{
 		if (!isset($tagRules[self::TR_TAG_IS_EMPTY]) or !$tagRules[self::TR_TAG_IS_EMPTY]) {
 			if(!$short && $content == '') return '';
 		}
-		// Собираем тег
-		$text='<'.$tag;
 
-		// Параметры
-		foreach($resParams as $param => $value) {
-			if ($value != '') {
-				$text.=' '.$param.'="'.$value.'"';
+		// Проверка на допустимые комбинации
+		if (isset($tagRules[self::TR_PARAM_COMBINATION])) {
+			$aRuleCombin=$tagRules[self::TR_PARAM_COMBINATION];
+			$resParamsList=$resParams;
+			foreach($resParamsList as $param => $value) {
+				$value=mb_strtolower($value);
+				if (isset($aRuleCombin[$param]['combination'][$value])) {
+					foreach($aRuleCombin[$param]['combination'][$value] as $sAttr=>$mValue) {
+						if (isset($resParams[$sAttr])) {
+							$bOK=false;
+							$sValueParam=mb_strtolower($resParams[$sAttr]);
+
+							if (is_string($mValue)) {
+								if ($mValue==$sValueParam) {
+									$bOK=true;
+								}
+							} elseif(is_array($mValue)) {
+								if (isset($mValue['#domain']) and is_array($mValue['#domain'])) {
+									if(!preg_match('/javascript:/ui', $sValueParam)) {
+										foreach ($mValue['#domain'] as $sDomain) {
+											$sDomain=preg_quote($sDomain);
+											if (preg_match("@^(http|https|ftp)://([\w\d]+\.)?{$sDomain}/@ui",$sValueParam)) {
+												$bOK=true;
+												break;
+											}
+										}
+									}
+								} elseif (in_array($sValueParam, $mValue)) {
+									$bOK=true;
+								}
+							} elseif($mValue===true) {
+								$bOK=true;
+							}
+
+							if (!$bOK) {
+								unset($resParams[$sAttr]);
+							}
+						}
+					}
+				} elseif(isset($aRuleCombin[$param]['remove']) and $aRuleCombin[$param]['remove']) {
+					return '';
+				}
 			}
 		}
-		
-		// Закрытие тега (если короткий то без контента)
-		$text.= $short && $this->isXHTMLMode ? '/>' : '>';
-		if(isset($tagRules[self::TR_TAG_CONTAINER])) $text .= "\r\n";
-		if(!$short) $text.= $content.'</'.$tag.'>';
-		if($parentTagIsContainer) $text .= "\r\n";
-		if($tag == 'br') $text.="\r\n";
+
+		// Если тег обрабатывает "полным" колбеком
+		if (isset($tagRules[self::TR_TAG_CALLBACK_FULL])) {
+			$text = call_user_func($tagRules[self::TR_TAG_CALLBACK_FULL], $tag, $resParams, $content);
+		} else {
+			// Собираем тег
+			$text='<'.$tag;
+
+			// Параметры
+			foreach($resParams as $param => $value) {
+				if ($value != '') {
+					$text.=' '.$param.'="'.$value.'"';
+				}
+			}
+
+			// Закрытие тега (если короткий то без контента)
+			$text.= $short && $this->isXHTMLMode ? '/>' : '>';
+			if(isset($tagRules[self::TR_TAG_CONTAINER])) $text .= "\r\n";
+			if(!$short) $text.= $content.'</'.$tag.'>';
+			if($parentTagIsContainer) $text .= "\r\n";
+			if($tag == 'br') $text.="\r\n";
+		}
 		return $text;
 	}
 
@@ -1037,6 +1188,9 @@ class Jevix{
 				// Пропускаем пробелы после <br> и запрещённых тегов, которые вырезаются парсером
 				if ($tag=='br') {
 					$this->skipNL();
+				} elseif (isset($this->tagsRules[$tag]) and isset($this->tagsRules[$tag][self::TR_TAG_BLOCK_TYPE])) {
+					$count=0;
+					$this->skipNL($count,2);
 				} elseif ($tagText == ''){
 					$this->skipSpaces();
 				}
@@ -1078,14 +1232,17 @@ class Jevix{
 	 * Пропуск переводов строк подсчет кол-ва
 	 *
 	 * @param int $count ссылка для возвращения числа переводов строк
+	 * @param int $limit максимальное число пропущенных переводов строк, при уставновке в 0 - не лимитируется
 	 * @return boolean
 	 */
-	protected function skipNL(&$count = 0){
+	protected function skipNL(&$count = 0,$limit=0){
 		if(!($this->curChClass & self::NL)) return false;
 		$count++;
 		$firstNL = $this->curCh;
 		$nl = $this->getCh();
 		while($this->curChClass & self::NL){
+			// Проверяем, не превышен ли лимит 
+			if($limit>0 and $count>=$limit) break;
 			// Если символ новый строки ткой же как и первый увеличиваем счетчик
 			// новых строк. Это сработает при любых сочетаниях
 			// \r\n\r\n, \r\r, \n\n - две перевода
@@ -1306,7 +1463,7 @@ class Jevix{
 		$url = '';
 		//$name = $this->name();
 		//switch($name)
-		$urlChMask = self::URL | self::ALPHA;
+		$urlChMask = self::URL | self::ALPHA | self::PUNCTUATUON;
 
 		if($this->matchStr('http://')){
 			while($this->curChClass & $urlChMask){
@@ -1320,6 +1477,19 @@ class Jevix{
 			}
 
 			$href = 'http://'.$url;
+			return true;
+		} elseif($this->matchStr('https://')){
+			while($this->curChClass & $urlChMask){
+				$url.= $this->curCh;
+				$this->getCh();
+			}
+
+			if(!mb_strlen($url, 'UTF-8')) {
+				$this->restoreState();
+				return false;
+			}
+
+			$href = 'https://'.$url;
 			return true;
 		} elseif($this->matchStr('www.')){
 			while($this->curChClass & $urlChMask){
