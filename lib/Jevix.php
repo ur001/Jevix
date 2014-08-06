@@ -1069,7 +1069,7 @@ class Jevix {
 
 		// Если тег обрабатывает "полным" колбеком
 		if (isset($tagRules[self::TR_TAG_CALLBACK_FULL])) {
-			$text = call_user_func($tagRules[self::TR_TAG_CALLBACK_FULL], $tag, $resParams);
+			$text = call_user_func($tagRules[self::TR_TAG_CALLBACK_FULL], $content, $resParams);
 		} else {
 			// Собираем тег
 			$text='<'.$tag;
