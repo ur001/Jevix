@@ -7,11 +7,15 @@
  * http://code.google.com/p/jevix/
  *
  * @author ur001 <ur001ur001@gmail.com>, http://ur001.habrahabr.ru
- * @version 1.12
+ * @author https://github.com/altocms/Jevix
+ *
+ * @version 1.13
  *
  * История версий:
+ * 1.13:
+ *  + Добавлено задание значений атрибутов с помощью регулярных выражений (в квадратных скобках)
  * 1.12:
- *  + Возможность указать разрешеные протоколы для разных параметров через cfgSetAllowedProtocols (avadim)
+ *  + Добавлено задание разрешеных протоколов для разных параметров
  * 1.11:
  *  + Исправлены ошибки из-за которых удалялись теги и аттрибуты со значением "0". Спасибо Dmitry Shurupov (dmitry.shurupov@trueoffice.ru)
  * 1.1:
@@ -23,7 +27,7 @@
  *  + Функции для работы со строками заменены на аналогичные mb_*, чтобы не перегружать через mbstring.func_overload (ev.y0ga@mail.ru)
  * 1.01
  *  + cfgSetAutoReplace теперь регистронезависимый
- *  + Возможность указать через cfgSetTagIsEmpty теги с пустым содержанием, которые не будут удалены парсером (rus.engine)
+ *  + Возможность указать через cfgSetTagIsEmpty теги с пустым содержанием, которые не будут адалены парсером (rus.engine)
  *  + фикс бага удаления контента тега при разном регистре открывающего и закрывающего тегов  (rus.engine)
  *  + Исправлено поведение парсера при установке правила sfgParamsAutoAdd(). Теперь
  *    параметр устанавливается только в том случае, если его вообще нет в
@@ -552,10 +556,7 @@ class Jevix{
 
 	/**
 	 * Перемещение на указанную позицию во входной строке и считывание символа
-     *
-     * @param   string  $position
-     *
-	 * @return  string  символ в указанной позиции
+	 * @return string символ в указанной позиции
 	 */
 	protected function goToPosition($position){
 		$this->curPos = $position;
@@ -1065,56 +1066,63 @@ class Jevix{
 			}
 
 			if(is_string($paramAllowedValues)){
-				switch($paramAllowedValues){
-					case '#int':
-						if(!is_numeric($value)) {
-							$this->error("Недопустимое значение для атрибута тега $tag $param=$value. Ожидалось число");
-							continue(2);
-						}
-						break;
-
-					case '#text':
-						$value = htmlspecialchars($value);
-						break;
-
-					case '#link':
-						// Ява-скрипт в ссылке
-						if(preg_match('/javascript:/ui', $value)) {
-							$this->error('Попытка вставить JavaScript в URI');
-							continue(2);
-						}
-						// Первый символ должен быть a-z0-9 или #!
-						if(!preg_match('/^[a-z0-9\/\#]/ui', $value)) {
-							$this->error('URI: Первый символ адреса должен быть буквой или цифрой');
-							continue(2);
-						}
-                        // HTTP в начале если нет
-                        $sProtocol = '(' . $this->_getAllowedProtocols('#link') . ')' . ($this->_getSkipProtocol('#link') ? '?' : '');
-                        if (!preg_match('@^' . $sProtocol . '//@ui', $value)
-                            && !preg_match('/^(\/|\#)/ui', $value)
-                            && !preg_match('/^(mailto):/ui', $value)
-                        ) {
-                            $value = 'http://' . $value;
-                        }
-                        break;
-
-                    case '#image':
-						// Ява-скрипт в пути к картинке
-						if(preg_match('/javascript:/ui', $value)) {
-							$this->error('Попытка вставить JavaScript в пути к изображению');
-							continue(2);
-						}
-						// HTTP в начале если нет
-                        $sProtocol = '(' . $this->_getAllowedProtocols('#image') . ')' . ($this->_getSkipProtocol('#image') ? '?' : '');
-						if(!preg_match('@^' . $sProtocol . '\/\/@ui', $value) && !preg_match('/^\//ui', $value)) {
-                            $value = 'http://'.$value;
-                        }
-						break;
-
-					default:
-						$this->error("Неверное описание атрибута тега в настройке Jevix: $param => $paramAllowedValues");
+				if (substr($paramAllowedValues, 0, 1) == '[' && substr($paramAllowedValues, -1) == ']') {
+					if(!preg_match(substr($paramAllowedValues, 1, strlen($paramAllowedValues) - 2), $value)) {
+						$this->error("Недопустимое значение для атрибута тега $tag $param=$value");
 						continue(2);
-						break;
+					}
+				} else {
+					switch($paramAllowedValues){
+						case '#int':
+							if(!is_numeric($value)) {
+								$this->error("Недопустимое значение для атрибута тега $tag $param=$value. Ожидалось число");
+								continue(2);
+							}
+							break;
+
+						case '#text':
+							$value = htmlspecialchars($value);
+							break;
+
+						case '#link':
+							// Ява-скрипт в ссылке
+							if(preg_match('/javascript:/ui', $value)) {
+								$this->error('Попытка вставить JavaScript в URI');
+								continue(2);
+							}
+							// Первый символ должен быть a-z0-9 или #!
+							if(!preg_match('/^[a-z0-9\/\#]/ui', $value)) {
+								$this->error('URI: Первый символ адреса должен быть буквой или цифрой');
+								continue(2);
+							}
+							// HTTP в начале если нет
+							$sProtocol = '(' . $this->_getAllowedProtocols('#link') . ')' . ($this->_getSkipProtocol('#link') ? '?' : '');
+							if (!preg_match('@^' . $sProtocol . '//@ui', $value)
+								&& !preg_match('/^(\/|\#)/ui', $value)
+								&& !preg_match('/^(mailto):/ui', $value)
+							) {
+								$value = 'http://' . $value;
+							}
+							break;
+
+						case '#image':
+							// Ява-скрипт в пути к картинке
+							if(preg_match('/javascript:/ui', $value)) {
+								$this->error('Попытка вставить JavaScript в пути к изображению');
+								continue(2);
+							}
+							// HTTP в начале если нет
+							$sProtocol = '(' . $this->_getAllowedProtocols('#image') . ')' . ($this->_getSkipProtocol('#image') ? '?' : '');
+							if(!preg_match('@^' . $sProtocol . '\/\/@ui', $value) && !preg_match('/^\//ui', $value)) {
+								$value = 'http://'.$value;
+							}
+							break;
+
+						default:
+							$this->error("Неверное описание атрибута тега в настройке Jevix: $param => $paramAllowedValues");
+							continue(2);
+							break;
+					}
 				}
 			}
 
@@ -1191,28 +1199,28 @@ class Jevix{
             }
         }
 
-        // Если тег обрабатывает "полным" колбеком
-		if (isset($tagRules[self::TR_TAG_CALLBACK_FULL])) {
-			$text = call_user_func($tagRules[self::TR_TAG_CALLBACK_FULL], $tag, $resParams, $content);
-		} else {
-			// Собираем тег
-			$text='<'.$tag;
+		// Собираем тег
+		$text='<'.$tag;
 
-			// Параметры
-			foreach($resParams as $param => $value) {
-				if ($value != '') {
-					$text.=' '.$param.'="'.$value.'"';
-				}
+		// Параметры
+		foreach($resParams as $param => $value) {
+			if ($value != '') {
+				$text.=' '.$param.'="'.$value.'"';
 			}
-
-			// Закрытие тега (если короткий то без контента)
-			$text.= $short && $this->isXHTMLMode ? '/>' : '>';
-			if(isset($tagRules[self::TR_TAG_CONTAINER])) $text .= "\r\n";
-			if(!$short) $text.= $content.'</'.$tag.'>';
-			if($parentTagIsContainer) $text .= "\r\n";
-			if($tag == 'br') $text.="\r\n";
 		}
-		return $text;
+
+		// Закрытие тега (если короткий то без контента)
+		$text.= $short && $this->isXHTMLMode ? '/>' : '>';
+		if(isset($tagRules[self::TR_TAG_CONTAINER])) $text .= "\r\n";
+		if(!$short) $text.= $content.'</'.$tag.'>';
+		if($parentTagIsContainer) $text .= "\r\n";
+		if($tag == 'br') $text.="\r\n";
+
+        // Если тег обрабатывает "полным" колбеком
+        if (isset($tagRules[self::TR_TAG_CALLBACK_FULL])) {
+            $text = call_user_func($tagRules[self::TR_TAG_CALLBACK_FULL], $tag, $resParams, $content, $text);
+        }
+        return $text;
 	}
 
 	protected function comment(){
