@@ -9,9 +9,15 @@
  * https://raw.github.com/bezumkin/modx-jevix/master/core/components/jevix/model/jevix/jevix.core.php
  *
  * @author ur001 <ur001ur001@gmail.com>, http://ur001.habrahabr.ru
- * @version 1.01
+ * @author https://github.com/altocms/Jevix
+ *
+ * @version 1.13
  *
  * История версий:
+ * 1.13:
+ *  + Добавлено задание значений атрибутов с помощью регулярных выражений (в квадратных скобках)
+ * 1.12:
+ *  + Добавлено задание разрешеных протоколов для разных параметров
  * 1.11:
  *  + Исправлены ошибки из-за которых удалялись теги и аттрибуты со значением "0". Спасибо Dmitry Shurupov (dmitry.shurupov@trueoffice.ru)
  * 1.1:
@@ -125,9 +131,9 @@ class Jevix {
 	protected $tagsStack;
 	protected $openedTag;
 	protected $autoReplace; // Автозамена
-	protected $linkProtocolAllow=array();
-	protected $linkProtocolAllowDefault=array('http','https','ftp');
-
+	protected $allowedProtocols = array('#img' => 'http:|https:');
+	protected $allowedProtocolsDefault = array('http','https','ftp', '');
+    protected $skipProtocol = array();
 	protected $autoPregReplace; // Автозамена с поддержкой регулярных выражений
 	protected $isXHTMLMode  = true; // <br/>, <img/>
 	protected $isAutoBrMode = true; // \n = <br/>
@@ -175,14 +181,18 @@ class Jevix {
 	 *
 	 * @param array|string $tags тег(и)
 	 * @param int $flag флаг
-	 * @param mixed $value значеник=е флага
-	 * @param boolean $createIfNoExists если тег ещё не определён - создть его
+     * @param mixed        $value             значение флага
+     * @param boolean      $createIfNotExists если тег ещё не определён - создть его
+     *
+     * @throws Exception
 	 */
-	protected function _cfgSetTagsFlag($tags, $flag, $value, $createIfNoExists = true){
-		if(!is_array($tags)) $tags = array($tags);
-		foreach($tags as $tag){
-			if(!isset($this->tagsRules[$tag])) {
-				if($createIfNoExists){
+    protected function _cfgSetTagsFlag($tags, $flag, $value, $createIfNotExists = true) {
+        if (!is_array($tags)) {
+            $tags = array($tags);
+        }
+        foreach ($tags as $tag) {
+            if (!isset($this->tagsRules[$tag])) {
+                if ($createIfNotExists) {
 					$this->tagsRules[$tag] = array();
 				} else {
 					throw new Exception("Тег $tag отсутствует в списке разрешённых тегов");
@@ -417,7 +427,7 @@ class Jevix {
 		$this->autoReplace = array('from' => $from, 'to' => $to);
 	}
 
-	/**
+    /**
 	 * Автозамена с поддержкой регулярных выражений
 	 *
 	 * @param array $from с
@@ -427,24 +437,60 @@ class Jevix {
 		$this->autoPregReplace = array('from' => $from, 'to' => $to);
 	}
 
-	/**
-	 * Устанавливает список разрешенных протоколов для ссылок (http, ftp и т.п.)
-	 *
-	 * @param array $aProtocol Список протоколов
-	 * @param bool $bClearDefault Удалить дефолтные протоколы?
-	 */
-	function cfgSetLinkProtocolAllow($aProtocol, $bClearDefault=false){
-		if (!is_array($aProtocol)) {
-			$aProtocol=array($aProtocol);
-		}
-		if ($bClearDefault) {
-			$this->linkProtocolAllow=$aProtocol;
-		} else {
-			$this->linkProtocolAllow=array_merge($this->linkProtocolAllowDefault,$aProtocol);
-		}
-	}
+     /**
+     * Устанавливает список разрешенных протоколов для ссылок (http, ftp и т.п.)
+     *
+     * @param array        $aProtocols          Список протоколов
+     * @param bool         $bClearDefault       Удалить дефолтные протоколы
+     */
+    function cfgSetLinkProtocolAllow($aProtocols, $bClearDefault = false) {
+        $this->cfgSetAllowedProtocols($aProtocols, $bClearDefault, '#link');
+    }
 
-	/**
+
+    /**
+     * Устанавливает список разрешенных протоколов (http, ftp и т.п.)
+     *
+     * @param array        $aProtocols          Список протоколов
+     * @param bool         $bClearDefault       Удалить дефолтные протоколы
+     * @param string|array $aParams             Для каких параметров задавать
+     */
+    function cfgSetAllowedProtocols($aProtocols, $bClearDefault = false, $aParams = array()) {
+        if (!is_array($aProtocols)) {
+            $aProtocols = array((string)$aProtocols);
+        }
+        if (!is_array($aParams)) {
+            $aParams = array((string)$aParams);
+        }
+        $bSkipProtocol = false;
+        foreach ($aProtocols as $nKey => $sProtocol) {
+            if (!$sProtocol) {
+                // "Пустой" протокол - разрешено пропускать протокол для параметра
+                $bSkipProtocol = true;
+                unset($aProtocols[$nKey]);
+            } elseif (substr($sProtocol, -1) == ':') {
+                // Убираем двоеточие в конце протокола
+                $aProtocols[$nKey] = trim($sProtocol, ':');
+            }
+        }
+        foreach ($aParams as $sParam) {
+            if ($aProtocols) {
+                if ($bClearDefault || !isset($this->allowedProtocols[$sParam])) {
+                    $this->allowedProtocols[$sParam] = implode(':|', $aProtocols) . ':';
+                } else {
+                    $this->allowedProtocols[$sParam] = implode(':|', array_merge($this->allowedProtocolsDefault, $aProtocols)) . ':';
+                }
+            }
+            // Разрешено ли пропускать протокол для параметра
+            if ($bSkipProtocol) {
+                $this->skipProtocol[$sParam] = true;
+            } else {
+                $this->skipProtocol[$sParam] = false;
+            }
+        }
+    }
+
+    /**
 	 * Включение или выключение режима XTML
 	 *
 	 * @param boolean $isXHTMLMode
@@ -1035,14 +1081,15 @@ class Jevix {
 						continue;
 					}
 					$bOK=false;
-					foreach ($paramAllowedValues['#domain'] as $sDomain) {
-						$sDomain=preg_quote($sDomain);
-						if (preg_match("@^(http|https|ftp)://([\w\d]+\.)?{$sDomain}/@ui",$value)) {
-							$bOK=true;
-							break;
-						}
-					}
-					if (!$bOK) {
+                    $sProtocol = '(' . $this->_getAllowedProtocols('#domain') . ')' . ($this->_getSkipProtocol('#domain') ? '?' : '');
+                    foreach ($paramAllowedValues['#domain'] as $sDomain) {
+                        $sDomain = preg_quote($sDomain);
+                        if (preg_match('@^' . $sProtocol . '//([\w\d]+\.)?' . $sDomain . '/@ui', $value)) {
+                            $bOK = true;
+                            break;
+                        }
+                    }
+                    if (!$bOK) {
 						$this->eror("Недопустимое значение для атрибута тега $tag $param=$value");
 						continue;
 					}
@@ -1056,48 +1103,63 @@ class Jevix {
 			}
 
 			if(is_string($paramAllowedValues)){
-				switch($paramAllowedValues){
-					case '#int':
-						if(!is_numeric($value)) {
-							$this->eror("Недопустимое значение для атрибута тега $tag $param=$value. Ожидалось число");
-							continue(2);
-						}
-						break;
-
-					case '#text':
-						$value = htmlspecialchars($value);
-						break;
-
-					case '#link':
-						// Ява-скрипт в ссылке
-						if(preg_match('/javascript:/ui', $value)) {
-							$this->eror('Попытка вставить JavaScript в URI');
-							continue(2);
-						}
-						// Первый символ должен быть a-z0-9 или #!
-						if(!preg_match('/^[a-z0-9\/\#]/ui', $value)) {
-							$this->eror('URI: Первый символ адреса должен быть буквой или цифрой');
-							continue(2);
-						}
-						// HTTP в начале если нет
-						$sProtocols=join('|',$this->linkProtocolAllow ? $this->linkProtocolAllow : $this->linkProtocolAllowDefault);
-						if(!preg_match('/^('.$sProtocols.'):\/\//ui', $value) && !preg_match('/^(\/|\#)/ui', $value) && !preg_match('/^(mailto):/ui', $value) ) $value = 'http://'.$value;
-						break;
-
-					case '#image':
-						// Ява-скрипт в пути к картинке
-						if(preg_match('/javascript:/ui', $value)) {
-							$this->eror('Попытка вставить JavaScript в пути к изображению');
-							continue(2);
-						}
-						// HTTP в начале если нет
-						if(!preg_match('/^(http|https):\/\//ui', $value) && !preg_match('/^\//ui', $value)) $value = 'http://'.$value;
-						break;
-
-					default:
-						$this->eror("Неверное описание атрибута тега в настройке Jevix: $param => $paramAllowedValues");
+				if (substr($paramAllowedValues, 0, 1) == '[' && substr($paramAllowedValues, -1) == ']') {
+					if(!preg_match(substr($paramAllowedValues, 1, strlen($paramAllowedValues) - 2), $value)) {
+						$this->eror("Недопустимое значение для атрибута тега $tag $param=$value");
 						continue(2);
-						break;
+					}
+				} else {
+					switch($paramAllowedValues){
+						case '#int':
+							if(!is_numeric($value)) {
+									$this->eror("Недопустимое значение для атрибута тега $tag $param=$value. Ожидалось число");
+								continue(2);
+							}
+							break;
+
+						case '#text':
+							$value = htmlspecialchars($value);
+							break;
+
+						case '#link':
+							// Ява-скрипт в ссылке
+							if(preg_match('/javascript:/ui', $value)) {
+									$this->eror('Попытка вставить JavaScript в URI');
+								continue(2);
+							}
+							// Первый символ должен быть a-z0-9 или #!
+							if(!preg_match('/^[a-z0-9\/\#]/ui', $value)) {
+									$this->eror('URI: Первый символ адреса должен быть буквой или цифрой');
+								continue(2);
+							}
+							// HTTP в начале если нет
+								$sProtocol = '(' . $this->_getAllowedProtocols('#link') . ')' . ($this->_getSkipProtocol('#link') ? '?' : '');
+								if (!preg_match('@^' . $sProtocol . '//@ui', $value)
+									&& !preg_match('/^(\/|\#)/ui', $value)
+									&& !preg_match('/^(mailto):/ui', $value)
+								) {
+									$value = 'http://' . $value;
+								}
+							break;
+
+						case '#image':
+							// Ява-скрипт в пути к картинке
+							if(preg_match('/javascript:/ui', $value)) {
+									$this->eror('Попытка вставить JavaScript в пути к изображению');
+								continue(2);
+							}
+							// HTTP в начале если нет
+								$sProtocol = '(' . $this->_getAllowedProtocols('#image') . ')' . ($this->_getSkipProtocol('#image') ? '?' : '');
+								if(!preg_match('@^' . $sProtocol . '\/\/@ui', $value) && !preg_match('/^\//ui', $value)) {
+									$value = 'http://'.$value;
+								}
+							break;
+
+						default:
+								$this->eror("Неверное описание атрибута тега в настройке Jevix: $param => $paramAllowedValues");
+							continue(2);
+							break;
+					}
 				}
 			}
 
@@ -1128,50 +1190,51 @@ class Jevix {
 			if(!$short && $content == '') return '';
 		}
 
-		// Проверка на допустимые комбинации
-		if (isset($tagRules[self::TR_PARAM_COMBINATION])) {
-			$aRuleCombin=$tagRules[self::TR_PARAM_COMBINATION];
-			$resParamsList=$resParams;
-			foreach($resParamsList as $param => $value) {
-				$value=mb_strtolower($value);
-				if (isset($aRuleCombin[$param]['combination'][$value])) {
-					foreach($aRuleCombin[$param]['combination'][$value] as $sAttr=>$mValue) {
-						if (isset($resParams[$sAttr])) {
-							$bOK=false;
-							$sValueParam=mb_strtolower($resParams[$sAttr]);
+        // Проверка на допустимые комбинации
+        if (isset($tagRules[self::TR_PARAM_COMBINATION])) {
+            $aRuleCombin = $tagRules[self::TR_PARAM_COMBINATION];
+            $resParamsList = $resParams;
+            foreach ($resParamsList as $param => $value) {
+                $value = mb_strtolower($value);
+                if (isset($aRuleCombin[$param]['combination'][$value])) {
+                    foreach ($aRuleCombin[$param]['combination'][$value] as $sAttr => $mValue) {
+                        if (isset($resParams[$sAttr])) {
+                            $bOK = false;
+                            $sValueParam = mb_strtolower($resParams[$sAttr]);
 
-							if (is_string($mValue)) {
-								if ($mValue==$sValueParam) {
-									$bOK=true;
-								}
-							} elseif(is_array($mValue)) {
-								if (isset($mValue['#domain']) and is_array($mValue['#domain'])) {
-									if(!preg_match('/javascript:/ui', $sValueParam)) {
-										foreach ($mValue['#domain'] as $sDomain) {
-											$sDomain=preg_quote($sDomain);
-											if (preg_match("@^(http|https|ftp)://([\w\d]+\.)?{$sDomain}/@ui",$sValueParam)) {
-												$bOK=true;
-												break;
-											}
-										}
-									}
-								} elseif (in_array($sValueParam, $mValue)) {
-									$bOK=true;
-								}
-							} elseif($mValue===true) {
-								$bOK=true;
-							}
+                            if (is_string($mValue)) {
+                                if ($mValue == $sValueParam) {
+                                    $bOK = true;
+                                }
+                            } elseif (is_array($mValue)) {
+                                if (isset($mValue['#domain']) && is_array($mValue['#domain'])) {
+                                    if (!preg_match('/javascript:/ui', $sValueParam)) {
+                                        $sProtocol = '(' . $this->_getAllowedProtocols('#domain') . ')' . ($this->_getSkipProtocol('#domain') ? '?' : '');
+                                        foreach ($mValue['#domain'] as $sDomain) {
+                                            $sDomain = preg_quote($sDomain);
+                                            if (preg_match('@^' . $sProtocol . '//([\w\d]+\.)?' . $sDomain . '/@ui', $sValueParam)) {
+                                                $bOK = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                } elseif (in_array($sValueParam, $mValue)) {
+                                    $bOK = true;
+                                }
+                            } elseif ($mValue === true) {
+                                $bOK = true;
+                            }
 
-							if (!$bOK) {
-								unset($resParams[$sAttr]);
-							}
-						}
-					}
-				} elseif(isset($aRuleCombin[$param]['remove']) and $aRuleCombin[$param]['remove']) {
-					return '';
-				}
-			}
-		}
+                            if (!$bOK) {
+                                unset($resParams[$sAttr]);
+                            }
+                        }
+                    }
+                } elseif (isset($aRuleCombin[$param]['remove']) and $aRuleCombin[$param]['remove']) {
+                    return '';
+                }
+            }
+        }
 
 		// Если тег обрабатывает "полным" колбеком
 		if (isset($tagRules[self::TR_TAG_CALLBACK_FULL])) {
@@ -1562,6 +1625,18 @@ class Jevix {
 			'str'     => $str,
 		);
 	}
+
+    protected function _getAllowedProtocols($sParam) {
+        if (!isset($this->allowedProtocols[$sParam])) {
+            $this->cfgSetAllowedProtocols($this->allowedProtocolsDefault, true, $sParam);
+        }
+        return $this->allowedProtocols[$sParam];
+    }
+
+    protected function _getSkipProtocol($sParam) {
+        return isset($this->skipProtocol[$sParam]) && $this->skipProtocol[$sParam];
+    }
+
 }
 
 /**
