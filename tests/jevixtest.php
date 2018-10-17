@@ -5,7 +5,8 @@
  * За помощь в написании примера спасибо Александру (http://vaart.habrahabr.ru, indrid@mail.ru)
  */
 
-require('../lib/Jevix.php');
+require('../src/functions.php');
+require('../src/Jevix.php');
 
 $jevix = new Jevix();
 
@@ -146,13 +147,13 @@ print_r($errors);
 В этих случаях лишние пробелы не появятся: 2,35%, смайлики ;-? или :-&gt; (да, html теги фильтровать мы умеем)<br/>
  — диалог ±5<br/>
  — првет, лишние br нам не страшны<br/>
- — автозамена ссылок с http:// и www: <a href="http://www.habrahabr.ru">www.habrahabr.ru</a>, <a href="http://google.com">google.com</a><br/>
+ — автозамена ссылок с http:// и www: <a href="http://www.habrahabr.ru" rel="">www.habrahabr.ru</a>, <a href="http://google.com" rel="">google.com</a><br/>
 <br/>
 BEGIN XSS test <img src="hhh=&quot;onclick=&quot;alert(document.cookie)" width="300px" height="300px"/>END XSS test<br/>
 <br/>
 переходим к &lt;тегам&gt;<br/>
 список требуемых<br/>
-список <b>разрешённых</b> и запрещённых тегов, их параметров и другие настройки можно задать в <a href="#">конфигурации</a><br/>
+список <b>разрешённых</b> и запрещённых тегов, их параметров и другие настройки можно задать в <a href="#" rel="">конфигурации</a><br/>
 защита от XSS <br/>
 <code>в теге &quot;code&quot; © ничего не - типогрфируем</code><br/>
 <pre>в теге &quot;pre&quot;
@@ -163,7 +164,7 @@ BEGIN XSS test <img src="hhh=&quot;onclick=&quot;alert(document.cookie)" width="
 <h6>ЭТОТ ТЕКСТ ДОЛЖЕН ОБРАБОТАТЬСЯ CALLBACK-ФУНКЦИЕЙ</h6><br/>
 ©2008 ur001®<br/>
 <pre>&lt;pre&gt;Проверка вложенных преформатированных тегов&lt;/pre&gt;</pre><br/>
-Знаки препинания на конце автоматических url: <a href="http://jevix.ru!">jevix.ru!</a><br/>
+Знаки препинания на конце автоматических url: <a href="http://jevix.ru!" rel="">jevix.ru!</a><br/>
 Вставка видео через автозамену регулярками<br/>
 <br/>
 Проверка прохождения url<br/>
@@ -172,15 +173,15 @@ XSS<br/>
 <img src="//yandex.st/morda-logo/i/logo.svg" width="300px" height="300px"/><br/>
 <img src="http://yandex.st/morda-logo/i/logo.svg" width="300px" height="300px"/><br/>
 <img src="https://yandex.st/morda-logo/i/logo.svg" width="300px" height="300px"/><br/>
-<a href="http://path/">Относительная ссылка</a><br/>
-<a href="./path/">Относительная ссылка</a><br/>
-<a href="../path">Относительная ссылка наверх</a><br/>
-<a href="/path/">Относительная ссылка от корня</a><br/>
-<a href="//yandex.st/morda-logo/i/logo.svg">Ссылка ipv6</a><br/>
-<a href="http://yandex.st">Ссылка без указания протокола</a><br/>
-<a href="mailto:mail@yandex.ru">Почта с указанием mailto</a><br/>
-<a href="mailto:mail@yandex.ru">Почта без указания mailto</a><br/>
-<a href="http://ur001.ru">а ещё парсер сам закрывает теги<br/>
+<a href="http://path/" rel="">Относительная ссылка</a><br/>
+<a href="./path/" rel="">Относительная ссылка</a><br/>
+<a href="../path" rel="">Относительная ссылка наверх</a><br/>
+<a href="/path/" rel="">Относительная ссылка от корня</a><br/>
+<a href="//yandex.st/morda-logo/i/logo.svg" rel="">Ссылка ipv6</a><br/>
+<a href="http://yandex.st" rel="">Ссылка без указания протокола</a><br/>
+<a href="mailto:mail@yandex.ru" rel="">Почта с указанием mailto</a><br/>
+<a href="mailto:mail@yandex.ru" rel="">Почта без указания mailto</a><br/>
+<a href="http://ur001.ru" rel="">а ещё парсер сам закрывает теги<br/>
 </a>
 -------------
 ошибки:
