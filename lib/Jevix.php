@@ -159,7 +159,7 @@ class Jevix {
 	const TR_TAG_IS_EMPTY = 13;      // Не короткий тег с пустым содержанием имеет право существовать
 	const TR_TAG_NO_AUTO_BR = 14;    // Тег в котором не нужна авто-расстановка <br>
 	const TR_TAG_CALLBACK = 15;      // Тег обрабатывается callback-функцией - в обработку уходит только контент тега(короткие теги не обрабатываются)
-	const TR_TAG_BLOCK_TYPE = 16;    // Тег после которого не нужна автоподстановка доп. <br> 
+	const TR_TAG_BLOCK_TYPE = 16;    // Тег после которого не нужна автоподстановка доп. <br>
 	const TR_TAG_CALLBACK_FULL = 17;    // Тег обрабатывается callback-функцией - в обработку уходит весь тег
 	const TR_PARAM_COMBINATION = 18;    // Проверка на возможные комбинации значений параметров тега
 
@@ -1175,7 +1175,7 @@ class Jevix {
 
 		// Если тег обрабатывает "полным" колбеком
 		if (isset($tagRules[self::TR_TAG_CALLBACK_FULL])) {
-			$text = call_user_func($tagRules[self::TR_TAG_CALLBACK_FULL], $tag, $resParams, $content);
+			$text = call_user_func($tagRules[self::TR_TAG_CALLBACK_FULL], $content, $resParams, $tag);
 		} else {
 			// Собираем тег
 			$text='<'.$tag;
@@ -1278,7 +1278,7 @@ class Jevix {
 		$firstNL = $this->curCh;
 		$nl = $this->getCh();
 		while($this->curChClass & self::NL){
-			// Проверяем, не превышен ли лимит 
+			// Проверяем, не превышен ли лимит
 			if($limit>0 and $count>=$limit) break;
 			// Если символ новый строки ткой же как и первый увеличиваем счетчик
 			// новых строк. Это сработает при любых сочетаниях
