@@ -14,13 +14,18 @@
         {
             "name": "Roman Shamritskiy",
             "email": "roman@litgroup.ru"
+        },
+        {
+            "name": "Evgeniy Borisov",
+            "email": "agel-nash@mail.ru"
         }
     ],
     "autoload": {
-        "psr-0": { "Jevix": "lib/" }
-    },
-
-    "require": {
-
+        "files": [
+          "src/functions.php"
+        ],
+        "psr-0": {
+          "Jevix": "src/"
+        }
     }
 }
