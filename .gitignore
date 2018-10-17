@@ -8,7 +8,7 @@
 /.settings
 /.project
 /.metadata
-
+/.idea
 /nbproject
 *.sublime*
 *~
