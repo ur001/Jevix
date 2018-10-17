@@ -110,11 +110,19 @@ class Jevix {
 	public $entities1 = array('"'=>'&quot;', "'"=>'&#39;', '&'=>'&amp;', '<'=>'&lt;', '>'=>'&gt;');
 	public $entities2 = array('<'=>'&lt;', '>'=>'&gt;', '"'=>'&quot;');
 	public $textQuotes = array(array('«', '»'), array('„', '“'));
+
 	public $dash = " — ";
 	public $apostrof = "’";
 	public $dotes = "…";
 	public $nl = "\r\n";
-	public $defaultTagParamRules = array('href' => '#link', 'src' => '#image', 'width' => '#int', 'height' => '#int', 'text' => '#text', 'title' => '#text');
+	public $defaultTagParamRules = array(
+		'href' => '#link',
+		'src' => '#image',
+		'width' => '#int',
+		'height' => '#int',
+		'text' => '#text',
+		'title' => '#text'
+	);
 
 	protected $text;
 	protected $textBuf;
@@ -131,8 +139,8 @@ class Jevix {
 	protected $tagsStack;
 	protected $openedTag;
 	protected $autoReplace; // Автозамена
-	protected $allowedProtocols = array('#img' => 'http:|https:');
-	protected $allowedProtocolsDefault = array('http','https','ftp', '');
+	protected $allowedProtocols = array('#img' => 'http:|https:', '#link' => 'http:|https:|ftp:|mailto:');
+	protected $allowedProtocolsDefault = array('http','https','ftp');
     protected $skipProtocol = array();
 	protected $autoPregReplace; // Автозамена с поддержкой регулярных выражений
 	protected $isXHTMLMode  = true; // <br/>, <img/>
@@ -534,34 +542,35 @@ class Jevix {
 		$this->quotesOpened = 0;
 		$this->noTypoMode = false;
 
-		// Авто растановка BR?
-		if($this->isAutoBrMode) {
-			$this->text = preg_replace('/<br\/?>(\r\n|\n\r|\n)?/ui', $this->nl, $text);
-		} else {
-			$this->text = $text;
-		}
+		$this->text = $text;
 
+        // Автозамена с регулярными выражениями
+        $replacements = array();
+        if(!empty($this->autoPregReplace)){
+            foreach ($this->autoPregReplace['from'] as $k => $v) {
+                preg_match_all($v, $this->text, $matches);
+                foreach ($matches[0] as $k2 => $v2) {
+                    $to = preg_replace($v, $this->autoPregReplace['to'][$k], $v2);
+                    $hash = sha1(serialize($v2));
 
-		if(!empty($this->autoReplace)){
-			$this->text = str_ireplace($this->autoReplace['from'], $this->autoReplace['to'], $this->text);
-		}
+                    $replacements[$hash] = $to;
+                    $this->text = str_replace($v2, $hash, $this->text);
+                }
+            }
+        }
 
-		$replacements = array();
-		if(!empty($this->autoPregReplace)){
-			foreach ($this->autoPregReplace['from'] as $k => $v) {
-				$matches = array();
-				if (preg_match_all($v, $this->text, $matches)) {
-					foreach ($matches[0] as $k2 => $v2) {
-						$replacements['from']["((((($k-$k2)))))"] = $v2;
-						$replacements['to']["((((($k-$k2)))))"] = preg_replace($v, $this->autoPregReplace['to'][$k], $v2);
-					}
-				}
-			}
-		}
+        if(!empty($this->autoReplace)){
+            $this->text = str_ireplace($this->autoReplace['from'], $this->autoReplace['to'], $this->text);
+        }
 
-		if (!empty($replacements)) {
-			$this->text = str_replace($replacements['from'], array_keys($replacements['from']), $this->text);
-		}
+        if (!empty($replacements)) {
+            $this->text = str_replace(array_keys($replacements), $replacements, $this->text);
+        }
+
+        // Авто растановка BR?
+        if($this->isAutoBrMode) {
+            $this->text = preg_replace('/<br\/?>(\r\n|\n\r|\n)?/ui', $this->nl, $this->text);
+        }
 
 		$this->textBuf = $this->strToArray($this->text);
 		$this->textLen = count($this->textBuf);
@@ -575,10 +584,6 @@ class Jevix {
 		$this->skipSpaces();
 		$this->anyThing($content);
 		$errors = $this->errors;
-
-		if (!empty($replacements)) {
-			$content = str_replace(array_keys($replacements['to']), $replacements['to'], $content);
-		}
 
 		return $content;
 	}
@@ -872,8 +877,13 @@ class Jevix {
 	}
 
 	protected function preformatted(&$content = '', $insideTag = null){
+		$tmp = '';
+		$tmp_content = '';
+		$start = $this->curPos;
+		$depth = 0;
 		while($this->curChClass){
 			if($this->curCh == '<'){
+				$tmp = '';
 				$tag = '';
 				$this->saveState();
 				// Пытаемся найти закрывающийся тег
@@ -881,8 +891,36 @@ class Jevix {
 				// Возвращаемся назад, если тег был найден
 				if($isClosedTag) $this->restoreState();
 				// Если закрылось то, что открылось - заканчиваем и возвращаем true
-				if($isClosedTag && $tag == $insideTag) return;
+				if($isClosedTag && $tag == $insideTag) {
+					// Если закрыли все открытые теги -
+					if ($depth === 0) {
+						// Сохраняем буфер и выходим
+						$content .= $tmp_content;
+						return;
 			}
+					else {
+						$depth --;
+					}
+				}
+			}
+			// Открыт ноый preformatted тег
+			elseif ($this->curCh == '>' && $tmp == $insideTag) {
+				$depth ++;
+			}
+			else {
+				$tmp .= $this->curCh;
+			}
+			$tmp_content.= isset($this->entities2[$this->curCh]) ? $this->entities2[$this->curCh] : $this->curCh;
+			$this->getCh();
+		}
+
+		// Это на случай незакрытых вложенных тегов
+		$this->goToPosition($start);
+		while ($this->curChClass) {
+			$tag = '';
+			$isClosedTag = $this->tagClose($tag);
+			if($isClosedTag) $this->restoreState();
+			if($isClosedTag && $tag == $insideTag) {return;}
 			$content.= isset($this->entities2[$this->curCh]) ? $this->entities2[$this->curCh] : $this->curCh;
 			$this->getCh();
 		}
@@ -1106,7 +1144,7 @@ class Jevix {
 				if (substr($paramAllowedValues, 0, 1) == '[' && substr($paramAllowedValues, -1) == ']') {
 					if(!preg_match(substr($paramAllowedValues, 1, strlen($paramAllowedValues) - 2), $value)) {
 						$this->eror("Недопустимое значение для атрибута тега $tag $param=$value");
-						continue(2);
+						continue;
 					}
 				} else {
 					switch($paramAllowedValues){
@@ -1123,41 +1161,66 @@ class Jevix {
 
 						case '#link':
 							// Ява-скрипт в ссылке
-							if(preg_match('/javascript:/ui', $value)) {
+							if (preg_match('/javascript:/ui', $value)) {
 									$this->eror('Попытка вставить JavaScript в URI');
 								continue(2);
-							}
-							// Первый символ должен быть a-z0-9 или #!
-							if(!preg_match('/^[a-z0-9\/\#]/ui', $value)) {
+							} // Первый символ должен быть a-z, 0-9, #, / или точка
+							elseif (!preg_match('/^[a-z0-9\/\#\.]/ui', $value)) {
 									$this->eror('URI: Первый символ адреса должен быть буквой или цифрой');
 								continue(2);
-							}
+							} // Пропускаем относительные url и ipv6
+							elseif (preg_match('/^(\.\.\/|\/)/ui', $value)) {
+                                break;
+                            }
+
 							// HTTP в начале если нет
-								$sProtocol = '(' . $this->_getAllowedProtocols('#link') . ')' . ($this->_getSkipProtocol('#link') ? '?' : '');
-								if (!preg_match('@^' . $sProtocol . '//@ui', $value)
-									&& !preg_match('/^(\/|\#)/ui', $value)
-									&& !preg_match('/^(mailto):/ui', $value)
-								) {
-									$value = 'http://' . $value;
+							$sProtocol = '(' . $this->_getAllowedProtocols('#link') . ')' . ($this->_getSkipProtocol('#link') ? '?' : '');
+							if (!preg_match('/^' . $sProtocol . '/ui', $value)
+								&& !preg_match('/^(\/|\#|\.)/ui', $value)
+								&& !preg_match('/.+@.+\..+/i', $value)
+							) {
+								$value = 'http://' . $value;
+							} elseif (preg_match('/.+@.+\..+/i', $value)) {
+								// Но нет протокола - добавляем
+								if (!preg_match('/^(mailto):/ui', $value)) {
+									$value = 'mailto:'.$value;
 								}
+							} // Если нет указания протокола:
+							elseif (!preg_match('/^(http|https|ftp):\/\//ui', $value)) {
+                                // Но адрес похож на домен
+                                if (preg_match('/\.[a-z]{2,}+/ui', $value)) {
+                                    $value = 'http://'.$value;
+                                } else {
+                                    //$value = '/'.$value;
+                                }
+                            }
 							break;
 
 						case '#image':
 							// Ява-скрипт в пути к картинке
-							if(preg_match('/javascript:/ui', $value)) {
-									$this->eror('Попытка вставить JavaScript в пути к изображению');
+							if (preg_match('/javascript:/ui', $value)) {
+								$this->eror('Попытка вставить JavaScript в пути к изображению');
 								continue(2);
 							}
-							// HTTP в начале если нет
-								$sProtocol = '(' . $this->_getAllowedProtocols('#image') . ')' . ($this->_getSkipProtocol('#image') ? '?' : '');
-								if(!preg_match('@^' . $sProtocol . '\/\/@ui', $value) && !preg_match('/^\//ui', $value)) {
+							// Пропускаем относительные url и ipv6
+							elseif (preg_match('/^(\.\.\/|\/)/ui', $value)) {
+								// HTTP в начале если нет
+									$sProtocol = '(' . $this->_getAllowedProtocols('#image') . ')' . ($this->_getSkipProtocol('#image') ? '?' : '');
+									if(!preg_match('@^' . $sProtocol . '\/\/@ui', $value) && !preg_match('/^\//ui', $value)) {
+										$value = 'http://'.$value;
+									}
+								break;
+							}
+							// Если нет указания протокола:
+							elseif (!preg_match('/^(http|https):\/\//ui', $value)) {
+								// Но адрес похож на домен с картинкой, то добавляем http
+								if (preg_match('/\.[a-z]{2,}+.*\./ui', $value)) {
 									$value = 'http://'.$value;
 								}
-							break;
-
-						default:
-								$this->eror("Неверное описание атрибута тега в настройке Jevix: $param => $paramAllowedValues");
-							continue(2);
+								else {
+									//$value = '/'.$value;
+								}
+							}
 							break;
 					}
 				}
@@ -1565,7 +1628,7 @@ class Jevix {
 		//switch($name)
 		$urlChMask = self::URL | self::ALPHA | self::PUNCTUATUON;
 
-		if($this->matchStr('http://')){
+		if ($this->matchStr('http://')) {
 			while($this->curChClass & $urlChMask){
 				$url.= $this->curCh;
 				$this->getCh();
@@ -1591,7 +1654,7 @@ class Jevix {
 
 			$href = 'https://'.$url;
 			return true;
-		} elseif($this->matchStr('www.')){
+		} elseif ($this->matchStr('www.')) {
 			while($this->curChClass & $urlChMask){
 				$url.= $this->curCh;
 				$this->getCh();
@@ -1604,10 +1667,19 @@ class Jevix {
 
 			$url = 'www.'.$url;
 			$href = 'http://'.$url;
-			return true;
 		}
-		$this->restoreState();
-		return false;
+		if (!empty($url)) {
+			if (preg_match('/[\.\,\-\?\!\:\;]+$/', $url, $matches)) {
+				$count = strlen($matches[0]);
+				$url = substr($url, 0, $count * -1);
+				$href = substr($href, 0, $count * -1);
+				$this->goToPosition($this->curPos - $count);
+			}
+			return true;
+		} else {
+			$this->restoreState();
+			return false;
+		}
 	}
 
 	protected function eror($message){
