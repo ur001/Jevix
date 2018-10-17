@@ -12,7 +12,7 @@
  * @author https://github.com/altocms/Jevix
  * @author Agel_Nash <agel-nash@mail.ru>
  *
- * @version 1.13
+ * @version 1.2
  */
 
 class Jevix
