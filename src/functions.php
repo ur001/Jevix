@@ -63,3 +63,13 @@ function unichr($c)
         }
     }
 }
+/**
+ * Checks whether the array is associative or not
+ * @param array $arr
+ * @return bool
+ */
+function isAssociative(array $arr)
+{
+    if (array() === $arr) return false;
+    return array_keys($arr) !== range(0, count($arr) - 1);
+}
