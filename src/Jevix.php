@@ -1390,21 +1390,15 @@ class Jevix
                     $bOK = false;
                     $sProtocol = '(' . $this->_getAllowedProtocols('#domain') . ')' . ($this->_getSkipProtocol('#domain') ? '?' : '');
                     // Support path-dependent rules per domain
-                    if (isAssociative($paramAllowedValues['#domain'])) {
-                        foreach ($paramAllowedValues['#domain'] as $sDomain => $sPathRegex) {
-                            $sDomain=preg_quote($sDomain);
-                            if (preg_match('@^' . $sProtocol . '//([\w\d]+\.)?' . $sDomain . '/' . $sPathRegex . '@ui', $value)) {
-                                $bOK = true;
-                                break;
-                            }
+                    foreach ($paramAllowedValues['#domain'] as $sDomain => $sPathRegex) {
+                        if (is_int($sDomain)) {
+                            $sDomain = $sPathRegex;
+                            $sPathRegex = '';
                         }
-                    } else {
-                        foreach ($paramAllowedValues['#domain'] as $sDomain) {
-                            $sDomain = preg_quote($sDomain);
-                            if (preg_match('@^' . $sProtocol . '//([\w\d]+\.)?' . $sDomain . '/@ui', $value)) {
-                                $bOK = true;
-                                break;
-                            }
+                        $sDomain = preg_quote($sDomain);
+                        if (preg_match('@^' . $sProtocol . '//([\w\d]+\.)?' . $sDomain . '/' . $sPathRegex . '@ui', $value)) {
+                            $bOK = true;
+                            break;
                         }
                     }
                     if (!$bOK) {
