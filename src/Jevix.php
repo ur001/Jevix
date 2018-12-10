@@ -307,7 +307,7 @@ class Jevix
      * @param int $flag флаг
      * @param mixed $value значение флага
      * @param boolean $createIfNotExists если тег ещё не определён - создть его
-     *
+     * @return void
      * @throws Exception
      */
     protected function _cfgSetTagsFlag($tags, $flag, $value, $createIfNotExists = true)
@@ -331,8 +331,9 @@ class Jevix
      * КОНФИГУРАЦИЯ: Разрешение или запрет тегов
      * Все не разрешённые теги считаются запрещёнными
      * @param array|string $tags тег(и)
+     * @throws Exception
      */
-    function cfgAllowTags($tags)
+    public function cfgAllowTags($tags)
     {
         $this->_cfgSetTagsFlag($tags, self::TR_TAG_ALLOWED, true);
     }
@@ -340,8 +341,9 @@ class Jevix
     /**
      * КОНФИГУРАЦИЯ: Коротие теги типа <img>
      * @param array|string $tags тег(и)
+     * @throws Exception
      */
-    function cfgSetTagShort($tags)
+    public function cfgSetTagShort($tags)
     {
         $this->_cfgSetTagsFlag($tags, self::TR_TAG_SHORT, true, false);
     }
@@ -349,8 +351,9 @@ class Jevix
     /**
      * КОНФИГУРАЦИЯ: Преформатированные теги, в которых всё заменяется на HTML сущности типа <pre>
      * @param array|string $tags тег(и)
+     * @throws Exception
      */
-    function cfgSetTagPreformatted($tags)
+    public function cfgSetTagPreformatted($tags)
     {
         $this->_cfgSetTagsFlag($tags, self::TR_TAG_PREFORMATTED, true, false);
     }
@@ -358,8 +361,9 @@ class Jevix
     /**
      * КОНФИГУРАЦИЯ: Теги в которых отключено типографирование типа <code>
      * @param array|string $tags тег(и)
+     * @throws Exception
      */
-    function cfgSetTagNoTypography($tags)
+    public function cfgSetTagNoTypography($tags)
     {
         $this->_cfgSetTagsFlag($tags, self::TR_TAG_NO_TYPOGRAPHY, true, false);
     }
@@ -368,8 +372,9 @@ class Jevix
      * КОНФИГУРАЦИЯ: Не короткие теги которые не нужно удалять с пустым содержанием, например, <param name="code"
      * value="die!"></param>
      * @param array|string $tags тег(и)
+     * @throws Exception
      */
-    function cfgSetTagIsEmpty($tags)
+    public function cfgSetTagIsEmpty($tags)
     {
         $this->_cfgSetTagsFlag($tags, self::TR_TAG_IS_EMPTY, true, false);
     }
@@ -377,8 +382,9 @@ class Jevix
     /**
      * КОНФИГУРАЦИЯ: Теги внутри который не нужна авто-расстановка <br/>, например, <ul></ul> и <ol></ol>
      * @param array|string $tags тег(и)
+     * @throws Exception
      */
-    function cfgSetTagNoAutoBr($tags)
+    public function cfgSetTagNoAutoBr($tags)
     {
         $this->_cfgSetTagsFlag($tags, self::TR_TAG_NO_AUTO_BR, true, false);
     }
@@ -386,8 +392,9 @@ class Jevix
     /**
      * КОНФИГУРАЦИЯ: Тег необходимо вырезать вместе с контентом (script, iframe)
      * @param array|string $tags тег(и)
+     * @throws Exception
      */
-    function cfgSetTagCutWithContent($tags)
+    public function cfgSetTagCutWithContent($tags)
     {
         $this->_cfgSetTagsFlag($tags, self::TR_TAG_CUT, true);
     }
@@ -395,8 +402,9 @@ class Jevix
     /**
      * КОНФИГУРАЦИЯ: После тега не нужно добавлять дополнительный <br/>
      * @param array|string $tags тег(и)
+     * @throws Exception
      */
-    function cfgSetTagBlockType($tags)
+    public function cfgSetTagBlockType($tags)
     {
         $this->_cfgSetTagsFlag($tags, self::TR_TAG_BLOCK_TYPE, true);
     }
@@ -405,8 +413,9 @@ class Jevix
      * КОНФИГУРАЦИЯ: Добавление разрешённых параметров тега
      * @param string $tag тег
      * @param string|array $params разрешённые параметры
+     * @throws Exception
      */
-    function cfgAllowTagParams($tag, $params)
+    public function cfgAllowTagParams($tag, $params)
     {
         if (!isset($this->tagsRules[$tag])) {
             throw new Exception("Тег $tag отсутствует в списке разрешённых тегов");
@@ -431,8 +440,9 @@ class Jevix
      * КОНФИГУРАЦИЯ: Добавление необходимых параметров тега
      * @param string $tag тег
      * @param string|array $params разрешённые параметры
+     * @throws Exception
      */
-    function cfgSetTagParamsRequired($tag, $params)
+    public function cfgSetTagParamsRequired($tag, $params)
     {
         if (!isset($this->tagsRules[$tag])) {
             throw new Exception("Тег $tag отсутствует в списке разрешённых тегов");
@@ -449,13 +459,15 @@ class Jevix
         }
     }
 
-    /* КОНФИГУРАЦИЯ: Установка тегов которые может содержать тег-контейнер
+    /**
+     * КОНФИГУРАЦИЯ: Установка тегов которые может содержать тег-контейнер
      * @param string $tag тег
      * @param string|array $childs разрешённые теги
-     * @param boolean $isContainerOnly тег является только контейнером других тегов и не может содержать текст
-     * @param boolean $isChildOnly вложенные теги не могут присутствовать нигде кроме указанного тега
+     * @param bool $isContainerOnly тег является только контейнером других тегов и не может содержать текст
+     * @param bool $isChildOnly вложенные теги не могут присутствовать нигде кроме указанного тега
+     * @throws Exception
      */
-    function cfgSetTagChilds($tag, $childs, $isContainerOnly = false, $isChildOnly = false)
+    public function cfgSetTagChilds($tag, $childs, $isContainerOnly = false, $isChildOnly = false)
     {
         if (!isset($this->tagsRules[$tag])) {
             throw new Exception("Тег $tag отсутствует в списке разрешённых тегов");
@@ -494,9 +506,10 @@ class Jevix
      * @param string $tag tag
      * @param string|array $params array of pairs array('name'=>attributeName, 'value'=>attributeValue,
      *     'rewrite'=>true|false)
-     * @deprecated устаревший синтаксис. Используйте cfgSetTagParamDefault
+     * @deprecated устаревший синтаксис. Используйте cfgSetTagParamDefault. Будет убран в версии 1.3
+     * @throws Exception
      */
-    function cfgSetTagParamsAutoAdd($tag, $params)
+    public function cfgSetTagParamsAutoAdd($tag, $params)
     {
         throw new Exception("cfgSetTagParamsAutoAdd() is Deprecated. Use cfgSetTagParamDefault() instead");
     }
@@ -506,9 +519,10 @@ class Jevix
      * @param string $tag тег
      * @param string $param атрибут
      * @param string $value значение
-     * @param boolean $isRewrite заменять указанное значение дефолтным
+     * @param bool $isRewrite заменять указанное значение дефолтным
+     * @throws Exception
      */
-    function cfgSetTagParamDefault($tag, $param, $value, $isRewrite = false)
+    public function cfgSetTagParamDefault($tag, $param, $value, $isRewrite = false)
     {
         if (!isset($this->tagsRules[$tag])) {
             throw new Exception("Tag $tag is missing in allowed tags list");
@@ -525,8 +539,9 @@ class Jevix
      * КОНФИГУРАЦИЯ: Устанавливаем callback-функцию на обработку содержимого тега
      * @param string $tag тег
      * @param mixed $callback функция
+     * @throws Exception
      */
-    function cfgSetTagCallback($tag, $callback = null)
+    public function cfgSetTagCallback($tag, $callback = null)
     {
         if (!isset($this->tagsRules[$tag])) {
             throw new Exception("Тег $tag отсутствует в списке разрешённых тегов");
@@ -538,8 +553,9 @@ class Jevix
      * КОНФИГУРАЦИЯ: Устанавливаем callback-функцию на обработку содержимого тега
      * @param string $tag тег
      * @param mixed $callback функция
+     * @throws Exception
      */
-    function cfgSetTagCallbackFull($tag, $callback = null)
+    public function cfgSetTagCallbackFull($tag, $callback = null)
     {
         if (!isset($this->tagsRules[$tag])) {
             throw new Exception("Тег $tag отсутствует в списке разрешённых тегов");
@@ -555,8 +571,9 @@ class Jevix
      * @param array $aCombinations Список комбинаций значений. Пример:
      *     array('myvalue'=>array('attr1'=>array('one','two'),'attr2'=>'other'))
      * @param bool $bRemove Удаляеть тег или нет, если в списке нет значения основного атрибута
+     * @throws Exception
      */
-    function cfgSetTagParamCombination($tag, $param, $aCombinations, $bRemove = false)
+    public function cfgSetTagParamCombination($tag, $param, $aCombinations, $bRemove = false)
     {
         if (!isset($this->tagsRules[$tag])) {
             throw new Exception("Tag $tag is missing in allowed tags list");
@@ -599,7 +616,7 @@ class Jevix
      * @param array $from с
      * @param array $to на
      */
-    function cfgSetAutoReplace($from, $to)
+    public function cfgSetAutoReplace($from, $to)
     {
         $this->autoReplace = array('from' => $from, 'to' => $to);
     }
@@ -610,7 +627,7 @@ class Jevix
      * @param array $from с
      * @param array $to на
      */
-    function cfgSetAutoPregReplace($from, $to)
+    public function cfgSetAutoPregReplace($from, $to)
     {
         $this->autoPregReplace = array('from' => $from, 'to' => $to);
     }
@@ -621,11 +638,10 @@ class Jevix
      * @param array $aProtocols Список протоколов
      * @param bool $bClearDefault Удалить дефолтные протоколы
      */
-    function cfgSetLinkProtocolAllow($aProtocols, $bClearDefault = false)
+    public function cfgSetLinkProtocolAllow($aProtocols, $bClearDefault = false)
     {
         $this->cfgSetAllowedProtocols($aProtocols, $bClearDefault, '#link');
     }
-
 
     /**
      * Устанавливает список разрешенных протоколов (http, ftp и т.п.)
@@ -634,7 +650,7 @@ class Jevix
      * @param bool $bClearDefault Удалить дефолтные протоколы
      * @param string|array $aParams Для каких параметров задавать
      */
-    function cfgSetAllowedProtocols($aProtocols, $bClearDefault = false, $aParams = array())
+    public function cfgSetAllowedProtocols($aProtocols, $bClearDefault = false, $aParams = array())
     {
         if (!is_array($aProtocols)) {
             $aProtocols = array((string)$aProtocols);
@@ -676,7 +692,7 @@ class Jevix
      *
      * @param boolean $isXHTMLMode
      */
-    function cfgSetXHTMLMode($isXHTMLMode)
+    public function cfgSetXHTMLMode($isXHTMLMode)
     {
         $this->br = $isXHTMLMode ? '<br/>' : '<br>';
         $this->isXHTMLMode = $isXHTMLMode;
@@ -687,7 +703,7 @@ class Jevix
      *
      * @param boolean $isAutoBrMode
      */
-    function cfgSetAutoBrMode($isAutoBrMode)
+    public function cfgSetAutoBrMode($isAutoBrMode)
     {
         $this->isAutoBrMode = $isAutoBrMode;
     }
@@ -697,11 +713,15 @@ class Jevix
      *
      * @param boolean $isAutoLinkMode
      */
-    function cfgSetAutoLinkMode($isAutoLinkMode)
+    public function cfgSetAutoLinkMode($isAutoLinkMode)
     {
         $this->isAutoLinkMode = $isAutoLinkMode;
     }
 
+    /**
+     * @param string $str
+     * @return array
+     */
     protected function &strToArray($str)
     {
         $chars = null;
@@ -710,8 +730,13 @@ class Jevix
         return $chars[0];
     }
 
-
-    function parse($text, &$errors)
+    /**
+     * @param $text
+     * @param $errors
+     * @return string
+     * @throws Exception
+     */
+    public function parse($text, &$errors)
     {
         $this->curPos = -1;
         $this->curCh = null;
@@ -778,6 +803,7 @@ class Jevix
 
     /**
      * Перемещение на указанную позицию во входной строке и считывание символа
+     * @param int $position
      * @return string символ в указанной позиции
      */
     protected function goToPosition($position)
@@ -798,7 +824,6 @@ class Jevix
 
     /**
      * Сохранить текущее состояние
-     *
      */
     protected function saveState()
     {
@@ -816,7 +841,8 @@ class Jevix
 
     /**
      * Восстановить
-     *
+     * @param int $index
+     * @throws Exception
      */
     protected function restoreState($index = null)
     {
@@ -844,7 +870,8 @@ class Jevix
      * Если символ соответствует указанному автомат сдвигается на следующий
      *
      * @param string $ch
-     * @return boolean
+     * @param bool $skipSpaces
+     * @return bool
      */
     protected function matchCh($ch, $skipSpaces = false)
     {
@@ -865,7 +892,8 @@ class Jevix
      * Если символ соответствует указанному классу автомат сдвигается на следующий
      *
      * @param int $chClass класс символа
-     * @return string найденый символ или false
+     * @param bool $skipSpaces
+     * @return string|bool найденый символ или false
      */
     protected function matchChClass($chClass, $skipSpaces = false)
     {
@@ -887,7 +915,9 @@ class Jevix
      * Если строка соответствует указанной автомат сдвигается на следующий после строки символ
      *
      * @param string $str
-     * @return boolean
+     * @param bool $skipSpaces
+     * @return bool
+     * @throws Exception
      */
     protected function matchStr($str, $skipSpaces = false)
     {
@@ -905,11 +935,10 @@ class Jevix
             }
 
             return true;
-        } else {
-            $this->restoreState();
-
-            return false;
         }
+
+        $this->restoreState();
+        return false;
     }
 
     /**
@@ -921,18 +950,15 @@ class Jevix
     protected function skipUntilCh($ch)
     {
         $chPos = mb_strpos($this->text, $ch, $this->curPos, 'UTF-8');
-        if ($chPos) {
-            return $this->goToPosition($chPos);
-        } else {
-            return false;
-        }
+        return $chPos ? $this->goToPosition($chPos) : false;
     }
 
     /**
      * Пропуск текста до нахождения указанной строки или символа
      *
      * @param string $str строка или символ ля поиска
-     * @return boolean
+     * @return bool
+     * @throws Exception
      */
     protected function skipUntilStr($str)
     {
@@ -975,6 +1001,7 @@ class Jevix
     /**
      * Возвращает класс символа
      *
+     * @param int $ord
      * @return int
      */
     protected function getCharClass($ord)
@@ -982,13 +1009,11 @@ class Jevix
         return isset($this->chClasses[$ord]) ? $this->chClasses[$ord] : self::PRINATABLE;
     }
 
-    /*function isSpace(){
-        return $this->curChClass == slf::SPACE;
-    }*/
-
     /**
      * Пропуск пробелов
      *
+     * @param int $count
+     * @return bool
      */
     protected function skipSpaces(&$count = 0)
     {
@@ -1004,6 +1029,8 @@ class Jevix
      *  Получает име (тега, параметра) по принципу 1 сиивол далее цифра или символ
      *
      * @param string $name
+     * @param bool $minus
+     * @return bool
      */
     protected function name(&$name = '', $minus = false)
     {
@@ -1024,6 +1051,14 @@ class Jevix
         return true;
     }
 
+    /**
+     * @param string $tag
+     * @param array $params
+     * @param string $content
+     * @param bool $short
+     * @return bool
+     * @throws Exception
+     */
     protected function tag(&$tag, &$params, &$content, &$short)
     {
         $this->saveState();
@@ -1093,6 +1128,11 @@ class Jevix
         return true;
     }
 
+    /**
+     * @param string $content
+     * @param null|string $insideTag
+     * @throws Exception
+     */
     protected function preformatted(&$content = '', $insideTag = null)
     {
         $tmp = '';
@@ -1148,6 +1188,11 @@ class Jevix
         }
     }
 
+    /**
+     * @param string $content
+     * @param null|string $insideTag
+     * @throws Exception
+     */
     protected function callback(&$content = '', $insideTag = null)
     {
         while ($this->curChClass) {
@@ -1174,6 +1219,13 @@ class Jevix
         }
     }
 
+    /**
+     * @param string $name
+     * @param array $params
+     * @param bool $short
+     * @return bool
+     * @throws Exception
+     */
     protected function tagOpen(&$name, &$params, &$short = false)
     {
         $restore = $this->saveState();
@@ -1220,7 +1272,10 @@ class Jevix
         return true;
     }
 
-
+    /**
+     * @param array $params
+     * @return bool
+     */
     protected function tagParams(&$params = array())
     {
         $name = null;
@@ -1234,6 +1289,12 @@ class Jevix
         return count($params) > 0;
     }
 
+    /**
+     * @param string $name
+     * @param string $value
+     * @return bool
+     * @throws Exception
+     */
     protected function tagParam(&$name, &$value)
     {
         $this->saveState();
@@ -1273,6 +1334,11 @@ class Jevix
         return true;
     }
 
+    /**
+     * @param string $value
+     * @param bool|string $quote
+     * @return bool
+     */
     protected function tagParamValue(&$value, $quote)
     {
         if ($quote !== false) {
@@ -1300,6 +1366,11 @@ class Jevix
         return true;
     }
 
+    /**
+     * @param string $name
+     * @return bool
+     * @throws Exception
+     */
     protected function tagClose(&$name)
     {
         $this->saveState();
@@ -1329,6 +1400,14 @@ class Jevix
         return true;
     }
 
+    /**
+     * @param string $tag
+     * @param array $params
+     * @param string $content
+     * @param bool $short
+     * @param null|string $parentTag
+     * @return mixed|string
+     */
     protected function makeTag($tag, $params, $content, $short, $parentTag = null)
     {
         $this->curParentTag = $parentTag;
@@ -1602,7 +1681,7 @@ class Jevix
             if ($parentTagIsContainer) {
                 $text .= "\r\n";
             }
-            if ($tag == 'br') {
+            if ($tag === 'br') {
                 $text .= "\r\n";
             }
         }
@@ -1610,6 +1689,10 @@ class Jevix
         return $text;
     }
 
+    /**
+     * @return bool
+     * @throws Exception
+     */
     protected function comment()
     {
         if (!$this->matchStr('<!--')) {
@@ -1619,6 +1702,12 @@ class Jevix
         return $this->skipUntilStr('-->');
     }
 
+    /**
+     * @param string $content
+     * @param null $parentTag
+     * @return bool
+     * @throws Exception
+     */
     protected function anyThing(&$content = '', $parentTag = null)
     {
         $this->skipNL();
@@ -1720,6 +1809,11 @@ class Jevix
         return true;
     }
 
+    /**
+     * @param string $dash
+     * @return bool
+     * @throws Exception
+     */
     protected function dash(&$dash)
     {
         if ($this->curCh != '-') {
@@ -1742,6 +1836,11 @@ class Jevix
         return true;
     }
 
+    /**
+     * @param string $punctuation
+     * @return bool
+     * @throws Exception
+     */
     protected function punctuation(&$punctuation)
     {
         if (!($this->curChClass & self::PUNCTUATUON)) {
@@ -1786,6 +1885,10 @@ class Jevix
         }
     }
 
+    /**
+     * @param string $num
+     * @return bool
+     */
     protected function number(&$num)
     {
         if (!(($this->curChClass & self::NUMERIC) == self::NUMERIC)) {
@@ -1801,6 +1904,11 @@ class Jevix
         return true;
     }
 
+    /**
+     * @param string $entityCh
+     * @return bool
+     * @throws Exception
+     */
     protected function htmlEntity(&$entityCh)
     {
         if ($this->curCh <> '&') {
@@ -1834,10 +1942,11 @@ class Jevix
     /**
      * Кавычка
      *
-     * @param boolean $spacesBefore были до этого пробелы
+     * @param bool $spacesBefore были до этого пробелы
      * @param string $quote кавычка
-     * @param boolean $closed закрывающаяся
-     * @return boolean
+     * @param bool $closed закрывающаяся
+     * @return bool
+     * @throws Exception
      */
     protected function quote($spacesBefore, &$quote, &$closed)
     {
@@ -1859,6 +1968,11 @@ class Jevix
         return true;
     }
 
+    /**
+     * @param bool $closed
+     * @param int $level
+     * @return mixed
+     */
     protected function makeQuote($closed, $level)
     {
         $levels = count($this->textQuotes);
@@ -1869,7 +1983,11 @@ class Jevix
         return $this->textQuotes[$level][$closed ? 1 : 0];
     }
 
-
+    /**
+     * @param string $text
+     * @return bool
+     * @throws Exception
+     */
     protected function text(&$text)
     {
         $text = '';
@@ -1970,6 +2088,12 @@ class Jevix
         return $text != '';
     }
 
+    /**
+     * @param string $url
+     * @param string $href
+     * @return bool
+     * @throws Exception
+     */
     protected function url(&$url, &$href)
     {
         $this->saveState();
@@ -2039,6 +2163,9 @@ class Jevix
         }
     }
 
+    /**
+     * @param string $message
+     */
     protected function eror($message)
     {
         $str = '';
@@ -2056,6 +2183,10 @@ class Jevix
         );
     }
 
+    /**
+     * @param string $sParam
+     * @return mixed
+     */
     protected function _getAllowedProtocols($sParam)
     {
         if (!isset($this->allowedProtocols[$sParam])) {
@@ -2065,9 +2196,12 @@ class Jevix
         return $this->allowedProtocols[$sParam];
     }
 
+    /**
+     * @param string $sParam
+     * @return bool
+     */
     protected function _getSkipProtocol($sParam)
     {
         return isset($this->skipProtocol[$sParam]) && $this->skipProtocol[$sParam];
     }
-
 }
