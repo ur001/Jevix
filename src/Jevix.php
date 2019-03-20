@@ -1536,7 +1536,7 @@ class Jevix
                                 $value = 'http://' . $value;
                             } elseif (preg_match('/.+@.+\..+/i', $value)) {
                                 // Но нет протокола - добавляем
-                                if (!preg_match('/^(mailto):/ui', $value)) {
+                                if (!preg_match('/^(.*?):/ui', $value)) {
                                     $value = 'mailto:' . $value;
                                 }
                             } // Если нет указания протокола:
