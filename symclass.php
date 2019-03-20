@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Генератор классификатора символов для Jevix
  * @author ur001 <ur001ur001@gmail.com>, http://ur001.habrahabr.ru
@@ -44,10 +44,9 @@ addChClass($tbl, array('"'), Jevix::TAG_QUOTE  | Jevix::HTML_QUOTE | Jevix::TAG_
 addChClass($tbl, array("'"), Jevix::TAG_QUOTE  | Jevix::TAG_QUOTE | Jevix::PRINATABLE);
 addChClass($tbl, array('.', ',', '!', '?', ':', ';'), Jevix::PUNCTUATUON | Jevix::PRINATABLE, true);
 addChClass($tbl, array('ё', 'Ё'), Jevix::ALPHA | Jevix::PRINATABLE | Jevix::RUS);
-addChClass($tbl, array('/', '.', '&', '?', '%', '-', '_', '=', ';', '+', '#', '|'),  Jevix::URL | Jevix::PRINATABLE, true);
+addChClass($tbl, array('/', '.', '&', '?', '%', '-', '_', '=', ';', '+', '#', '|', '@'),  Jevix::URL | Jevix::PRINATABLE, true);
 
 ob_start();
 var_export($tbl);
 $res = ob_get_clean();
 print str_replace(array("\n", ' '), '', $res).';';
-?>
