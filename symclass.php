@@ -1,13 +1,14 @@
-<?
+<?php
 /**
  * Генератор классификатора символов для Jevix
  * @author ur001 <ur001ur001@gmail.com>, http://ur001.habrahabr.ru
- * 
+ *
  * В Jevix::$chClasses уже есть сгенерированный классификатор
  * Этот файл необходим только чтобы изменить правила классификации
  */
 
-require 'jevix.class.php';
+require('src/functions.php');
+require('src/Jevix.php');
 
 //РЕНДЕРИНГ КЛАССИФИКАТОРА СИМВОЛОВ
 function addChClass(&$tbl, $chars, $class, $add = false){
@@ -16,8 +17,8 @@ function addChClass(&$tbl, $chars, $class, $add = false){
 		if(!$add || !isset($tbl[$ord])){
 			$tbl[$ord] = $class;
 		} else {
-			$tbl[$ord] = (isset($tbl[$ord]) ? $tbl[$ord] : 0) | $class;	
-		}		
+			$tbl[$ord] = (isset($tbl[$ord]) ? $tbl[$ord] : 0) | $class;
+		}
 	}
 }
 
@@ -26,7 +27,7 @@ function addChRangeClass(&$tbl, $chFrom, $chTo, $class, $add = false){
 		if(!$add || !isset($tbl[$i])){
 			$tbl[$i] = $class;
 		} else {
-			$tbl[$i] = (isset($tbl[$i]) ? $tbl[$i] : 0) | $class;	
+			$tbl[$i] = (isset($tbl[$i]) ? $tbl[$i] : 0) | $class;
 		}
 	}
 }
@@ -43,10 +44,9 @@ addChClass($tbl, array('"'), Jevix::TAG_QUOTE  | Jevix::HTML_QUOTE | Jevix::TAG_
 addChClass($tbl, array("'"), Jevix::TAG_QUOTE  | Jevix::TAG_QUOTE | Jevix::PRINATABLE);
 addChClass($tbl, array('.', ',', '!', '?', ':', ';'), Jevix::PUNCTUATUON | Jevix::PRINATABLE, true);
 addChClass($tbl, array('ё', 'Ё'), Jevix::ALPHA | Jevix::PRINATABLE | Jevix::RUS);
-addChClass($tbl, array('/', '.', '&', '?', '%', '-', '_', '=', ';', '+', '#', '|'),  Jevix::URL | Jevix::PRINATABLE, true);
+addChClass($tbl, array('/', '.', '&', '?', '%', '-', '_', '=', ';', '+', '#', '|', '@'),  Jevix::URL | Jevix::PRINATABLE, true);
 
 ob_start();
 var_export($tbl);
 $res = ob_get_clean();
 print str_replace(array("\n", ' '), '', $res).';';
-?>
